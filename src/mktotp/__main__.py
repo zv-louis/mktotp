@@ -16,14 +16,14 @@ def handle_add(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    mgr = SecretMgr(args.secrets_file)
-    mgr.load()  # Load existing secrets
-    qrcode_datas = decode_qrcode(args.file)
-    result = mgr.register_secret(args.new_name, qrcode_datas)
-    mgr.save()
-    # display the registered secrets
-    for sec in result:
-        print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
+    with SecretMgr(args.secrets_file) as mgr:
+        mgr.load()  # Load existing secrets
+        qrcode_datas = decode_qrcode(args.file)
+        result = mgr.register_secret(args.new_name, qrcode_datas)
+        mgr.save()
+        # diwith SecretMgr(args.secrets_file) as mgr:splay the registered secrets
+        for sec in result:
+            print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
 # ----------------------------------------------------------------------------
 def handle_get(args):
@@ -33,10 +33,10 @@ def handle_get(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    mgr = SecretMgr(args.secrets_file)
-    mgr.load()
-    token = mgr.gen_totp_token(args.name)
-    print(token)
+    with SecretMgr(args.secrets_file) as mgr:
+        mgr.load()
+        token = mgr.gen_totp_token(args.name)
+        print(token)
 
 # ----------------------------------------------------------------------------
 def handle_list(args):
@@ -46,14 +46,14 @@ def handle_list(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    mgr = SecretMgr(args.secrets_file)
-    mgr.load()
-    secrets = mgr.list_secrets()
-    if not secrets:
-        print("No secrets found.")
-    else:
-        for sec in secrets:
-            print(f"Secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
+    with SecretMgr(args.secrets_file) as mgr:
+        mgr.load()
+        secrets = mgr.list_secrets()
+        if not secrets:
+            print("No secrets found.")
+        else:
+            for sec in secrets:
+                print(f"Secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
 # ----------------------------------------------------------------------------
 def handle_remove(args):
@@ -63,14 +63,14 @@ def handle_remove(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    mgr = SecretMgr(args.secrets_file)
-    mgr.load()
-    result = mgr.remove_secret(args.name)
-    if result:
-        mgr.save()
-        print(f"Secret '{args.name}' removed successfully.")
-    else:
-        print(f"Secret '{args.name}' not found.")   
+    with SecretMgr(args.secrets_file) as mgr:
+        mgr.load()
+        result = mgr.remove_secret(args.name)
+        if result:
+            mgr.save()
+            print(f"Secret '{args.name}' removed successfully.")
+        else:
+            print(f"Secret '{args.name}' not found.")   
 
 # ----------------------------------------------------------------------------
 def handle_rename(args):
@@ -80,14 +80,14 @@ def handle_rename(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    mgr = SecretMgr(args.secrets_file)
-    mgr.load()
-    result = mgr.rename_secret(args.name, args.new_name)
-    if result:
-        mgr.save()
-        print(f"Secret '{args.name}' renamed to '{args.new_name}' successfully.")
-    else:
-        print(f"Secret '{args.name}' not found or rename failed.")
+    with SecretMgr(args.secrets_file) as mgr:
+        mgr.load()
+        result = mgr.rename_secret(args.name, args.new_name)
+        if result:
+            mgr.save()
+            print(f"Secret '{args.name}' renamed to '{args.new_name}' successfully.")
+        else:
+            print(f"Secret '{args.name}' not found or rename failed.")
 
 # ---------------------------------------------------------------------------------------
 def main():

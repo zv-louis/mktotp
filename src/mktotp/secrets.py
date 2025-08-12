@@ -6,6 +6,7 @@ import json
 import datetime
 import pyotp
 from pathlib import Path
+from filelock import FileLock, Timeout
 
 from .logutil import get_logger
 from .permutil import set_secure_permissions, check_file_permissions
@@ -28,6 +29,7 @@ class SecretMgr:
         # Initialize an empty dictionary to hold secret data
         self.secret_data = {}
         self.secrets_file: Path = None
+        self.lock: FileLock = None
 
         if secrets_file is None:
             user_home = os.path.expanduser("~")
@@ -35,6 +37,60 @@ class SecretMgr:
             self.secrets_file = secrets_file
         else:
             self.secrets_file = Path(secrets_file)
+
+        # Ensure the secrets file is a Path object
+        if not isinstance(self.secrets_file, Path):
+            self.secrets_file = Path(self.secrets_file)
+        self.lock_file = self.secrets_file.with_suffix('.lock')
+
+    # ----------------------------------------------------------------------------
+    def __del__(self):
+        """
+        Destructor to clean up resources.
+        """
+        if self.lock and self.lock.is_locked:
+            try:
+                self.lock.release()
+            except Exception as e:
+                get_logger().warning(f"Failed to release lock on secrets file: {e}")
+        get_logger().debug("SecretMgr instance deleted.")
+
+    # ----------------------------------------------------------------------------
+    def __enter__(self):
+        """
+        Enter the runtime context related to this object.
+        Returns:
+            SecretDic: The instance of the SecretDic class.
+        """
+        # Ensure the directory exists
+        self.lock_file.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Acquire a file lock to prevent concurrent access
+        self.lock = FileLock(self.lock_file, timeout=10)
+        try:
+            self.lock.acquire()
+        except Timeout as e:
+            get_logger().error(f"Failed to acquire lock for secrets file {self.secrets_file}: timeout after 10 seconds")
+            raise RuntimeError(f"Could not acquire lock for secrets file. Another process may be using it.") from e
+        except Exception as e:
+            get_logger().error(f"Failed to acquire lock for secrets file {self.secrets_file}: {e}")
+            raise RuntimeError(f"Could not acquire lock for secrets file: {e}") from e
+        return self
+
+    # ----------------------------------------------------------------------------
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Exit the runtime context related to this object.
+        Args:
+            exc_type: The exception type.
+            exc_value: The exception value.
+            traceback: The traceback object.
+        """
+        try:
+            if self.lock and self.lock.is_locked:
+                self.lock.release()
+        except Exception as e:
+            get_logger().warning(f"Failed to release lock on exit: {e}")
+            # Don't suppress the original exception
 
     # ----------------------------------------------------------------------------
     def load(self):
@@ -54,7 +110,7 @@ class SecretMgr:
                 if not check_file_permissions(self.secrets_file):
                     get_logger().warning(f"Fixing file permissions on {self.secrets_file}")
                     set_secure_permissions(self.secrets_file)
-            
+
             with open(self.secrets_file, 'r', encoding='utf-8') as file:
                 raw_data = json.load(file)
 
