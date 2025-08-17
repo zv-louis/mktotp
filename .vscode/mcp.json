@@ -1,6 +1,20 @@
 {
     "servers": {
+        "mktotp": {
+            "type": "stdio",
+            "command": "uv",
+            "args": [
+                "run",
+                "--directory",
+                "${workspaceFolder}",
+                "-m",
+                "mktotp",
+                "mcp",
+                "--mcp-server"
+            ],
+            "env": {},
 
+        }
     },
     "inputs": []
 }

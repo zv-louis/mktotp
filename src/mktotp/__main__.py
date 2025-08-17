@@ -6,7 +6,10 @@ from pathlib import Path
 from .secrets import SecretMgr
 from .qrcode_util import decode_qrcode
 from .logutil import get_logger
+from .func_impl import *
 from .cmdparam import *
+
+from .mcp_server import run_as_mcp_server, disp_tools
 
 # ----------------------------------------------------------------------------
 def handle_add(args):
@@ -16,14 +19,12 @@ def handle_add(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    with SecretMgr(args.secrets_file) as mgr:
-        mgr.load()  # Load existing secrets
-        qrcode_datas = decode_qrcode(args.file)
-        result = mgr.register_secret(args.new_name, qrcode_datas)
-        mgr.save()
-        # diwith SecretMgr(args.secrets_file) as mgr:splay the registered secrets
-        for sec in result:
-            print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
+    secrets_file = args.secrets_file if args.secrets_file else None
+    result = register_secret(qr_code_file=args.file,
+                             new_name=args.new_name,
+                             secrets_file=secrets_file)
+    for sec in result:
+        print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
 # ----------------------------------------------------------------------------
 def handle_get(args):
@@ -33,9 +34,9 @@ def handle_get(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    with SecretMgr(args.secrets_file) as mgr:
-        mgr.load()
-        token = mgr.gen_totp_token(args.name)
+    token = gen_token(name=args.name,
+                      secrets_file=args.secrets_file)
+    if token:
         print(token)
 
 # ----------------------------------------------------------------------------
@@ -46,14 +47,13 @@ def handle_list(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    with SecretMgr(args.secrets_file) as mgr:
-        mgr.load()
-        secrets = mgr.list_secrets()
-        if not secrets:
-            print("No secrets found.")
-        else:
-            for sec in secrets:
-                print(f"Secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
+    secrets_file = args.secrets_file if args.secrets_file else None
+    secrets = get_secret_list(secrets_file=secrets_file)
+    if not secrets:
+        print("No secrets found.")
+    else:
+        for sec in secrets:
+            print(f"Secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
 # ----------------------------------------------------------------------------
 def handle_remove(args):
@@ -63,14 +63,15 @@ def handle_remove(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    with SecretMgr(args.secrets_file) as mgr:
-        mgr.load()
-        result = mgr.remove_secret(args.name)
-        if result:
-            mgr.save()
-            print(f"Secret '{args.name}' removed successfully.")
-        else:
-            print(f"Secret '{args.name}' not found.")   
+    result = []
+    secrets_file = args.secrets_file if args.secrets_file else None
+    names = [args.name]
+    result = remove_secrets(names=names,
+                            secrets_file=secrets_file)
+    if result:
+        print(f"Secret '{args.name}' removed successfully.")
+    else:
+        print(f"Secret '{args.name}' not found.")
 
 # ----------------------------------------------------------------------------
 def handle_rename(args):
@@ -80,14 +81,31 @@ def handle_rename(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    with SecretMgr(args.secrets_file) as mgr:
-        mgr.load()
-        result = mgr.rename_secret(args.name, args.new_name)
-        if result:
-            mgr.save()
-            print(f"Secret '{args.name}' renamed to '{args.new_name}' successfully.")
-        else:
-            print(f"Secret '{args.name}' not found or rename failed.")
+    secrets_file = args.secrets_file if args.secrets_file else None
+    result = rename_secret(name=args.name,
+                           new_name=args.new_name,
+                           secrets_file=secrets_file)
+    if result:
+        print(f"Secret '{args.name}' renamed to '{args.new_name}' successfully.")
+    else:
+        print(f"Secret '{args.name}' not found or rename failed.")
+
+# ----------------------------------------------------------------------------
+def handle_mcp(args):
+    """
+    Handle the 'mcp' command to run the MCP server.
+
+    Args:
+        args (argparse.Namespace): Parsed command line arguments.
+    """
+
+    run_mcp = args.mcp_server if args.mcp_server else False
+    if run_mcp:
+        # If the MCP server flag is set, run the MCP server
+        run_as_mcp_server()
+    else:
+        # Otherwise, run the MCP server test
+        disp_tools()
 
 # ---------------------------------------------------------------------------------------
 def main():
@@ -120,6 +138,8 @@ def main():
     register_sub_list(subparsers, handle_list, parent_parser=common)
     register_sub_remove(subparsers, handle_remove, parent_parser=common)
     register_sub_rename(subparsers, handle_rename, parent_parser=common)
+    register_sub_mcp(subparsers, handle_mcp, parent_parser=common)
+
 
     try:
         # Parse the command line arguments

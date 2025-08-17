@@ -71,6 +71,24 @@ class TestSecretMgr:
         assert mgr.secret_data == {}
 
     # ----------------------------------------------------------------------------
+    def test_init_with_empty_string_path(self):
+        """Test SecretMgr initialization with empty string path uses default"""
+        mgr = SecretMgr("")
+        # Should use default path
+        expected_default = Path(os.path.expanduser("~")) / ".mktotp" / "data" / "secrets.json"
+        assert mgr.secrets_file == expected_default
+        assert mgr.secret_data == {}
+
+    # ----------------------------------------------------------------------------
+    def test_init_with_none_path(self):
+        """Test SecretMgr initialization with None path uses default"""
+        mgr = SecretMgr(None)
+        # Should use default path
+        expected_default = Path(os.path.expanduser("~")) / ".mktotp" / "data" / "secrets.json"
+        assert mgr.secrets_file == expected_default
+        assert mgr.secret_data == {}
+
+    # ----------------------------------------------------------------------------
     def test_load_secrets_success(self, temp_secrets_file):
         """Test successful loading of secrets from file"""
         mgr = SecretMgr(temp_secrets_file)
@@ -221,27 +239,53 @@ class TestSecretMgr:
         assert mgr2.secret_data["save_test"]["account"] == "new@example.com"
 
     # ----------------------------------------------------------------------------
-    def test_remove_secret_success(self, temp_secrets_file):
+    def test_remove_secrets_success(self, temp_secrets_file):
         """Test removing an existing secret"""
         mgr = SecretMgr(temp_secrets_file)
         mgr.load()
         
-        result = mgr.remove_secret("test_secret1")
+        result = mgr.remove_secrets(["test_secret1"])
         
-        assert result is True
+        assert result == ["test_secret1"]
         assert "test_secret1" not in mgr.secret_data
         assert "test_secret2" in mgr.secret_data  # Other secret should remain
 
     # ----------------------------------------------------------------------------
-    def test_remove_secret_nonexistent(self, temp_secrets_file):
+    def test_remove_secrets_multiple(self, temp_secrets_file):
+        """Test removing multiple existing secrets"""
+        mgr = SecretMgr(temp_secrets_file)
+        mgr.load()
+        
+        result = mgr.remove_secrets(["test_secret1", "test_secret2"])
+        
+        assert set(result) == {"test_secret1", "test_secret2"}
+        assert "test_secret1" not in mgr.secret_data
+        assert "test_secret2" not in mgr.secret_data
+        assert len(mgr.secret_data) == 0
+
+    # ----------------------------------------------------------------------------
+    def test_remove_secrets_nonexistent(self, temp_secrets_file):
         """Test removing a non-existent secret"""
         mgr = SecretMgr(temp_secrets_file)
         mgr.load()
         
-        result = mgr.remove_secret("nonexistent_secret")
+        result = mgr.remove_secrets(["nonexistent_secret"])
         
-        assert result is False
+        assert result == []
         assert len(mgr.secret_data) == 2  # Original secrets should remain
+
+    # ----------------------------------------------------------------------------
+    def test_remove_secrets_mixed(self, temp_secrets_file):
+        """Test removing a mix of existing and non-existent secrets"""
+        mgr = SecretMgr(temp_secrets_file)
+        mgr.load()
+        
+        result = mgr.remove_secrets(["test_secret1", "nonexistent_secret", "test_secret2"])
+        
+        assert set(result) == {"test_secret1", "test_secret2"}
+        assert "test_secret1" not in mgr.secret_data
+        assert "test_secret2" not in mgr.secret_data
+        assert len(mgr.secret_data) == 0
 
     # ----------------------------------------------------------------------------
     def test_rename_secret_success(self, temp_secrets_file):

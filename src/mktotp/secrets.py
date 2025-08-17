@@ -31,7 +31,7 @@ class SecretMgr:
         self.secrets_file: Path = None
         self.lock: FileLock = None
 
-        if secrets_file is None:
+        if secrets_file is None or str(secrets_file) == '':
             user_home = os.path.expanduser("~")
             secrets_file = Path(user_home) / ".mktotp" / "data" / "secrets.json"
             self.secrets_file = secrets_file
@@ -139,12 +139,6 @@ class SecretMgr:
         except PermissionError:
             get_logger().error(f"Permission denied for secrets file: {self.secrets_file}")
             raise
-        except FileNotFoundError:
-            get_logger().error(f"Secrets file not found: {self.secrets_file}")
-            raise
-        except PermissionError:
-            get_logger().error(f"Permission denied for secrets file: {self.secrets_file}")
-            raise
         except json.JSONDecodeError:
             get_logger().error(f"Error decoding JSON from secrets file: {self.secrets_file}")
             raise
@@ -243,7 +237,6 @@ class SecretMgr:
         try:
             # Ensure the directory exists with proper permissions
             self.secrets_file.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            
             # Create a temporary file to write the secrets
             work_path = Path(self.secrets_file).with_suffix('.tmp')
             with open(work_path, 'w', encoding='utf-8') as file:
@@ -258,10 +251,8 @@ class SecretMgr:
                     'last_update': last_update
                 }
                 json.dump(dump_dic, file, indent=4, ensure_ascii=False)
-            
             # Set secure permissions on temporary file
             set_secure_permissions(work_path)
-            
             # Rename the temporary file to the original secrets file
             if self.secrets_file.is_file():
                 backup_path = self.secrets_file.with_suffix('.bak')
@@ -269,33 +260,34 @@ class SecretMgr:
                     backup_path.unlink()
                 self.secrets_file.rename(backup_path)
             work_path.rename(self.secrets_file)
-            
             # Ensure the final file also has secure permissions
             set_secure_permissions(self.secrets_file)
-            
             get_logger().info(f"Secrets saved successfully to {self.secrets_file}")
         except IOError as e:
             get_logger().error(f"Error saving secrets to file: {e}")
             raise IOError(f"Error saving secrets to file: {e}")
 
     # ----------------------------------------------------------------------------
-    def remove_secret(self, name: str) -> bool:
+    def remove_secrets(self, names: list[str]) -> list[str]:
         """
         Remove a secret by its name.
 
         Args:
-            name (str): The name of the secret to remove.
-
+            names (list[str]): The names of the secrets to remove.
         Returns:
-            bool: True if the secret was removed, False if it was not found.
+            list[str]: A list of names of the secrets that were removed.
+        Raises:
+            ValueError: If the name is not found in the secret data.
         """
-        result = False
-        if name in self.secret_data:
-            del self.secret_data[name]
-            get_logger().info(f"Secret '{name}' removed successfully.")
-            result = True
-        else:
-            get_logger().info(f"Secret '{name}' not found.")
+        result = []
+        for name in names:
+            if name in self.secret_data:
+                del self.secret_data[name]
+                get_logger().info(f"Secret '{name}' removed successfully.")
+                result.append(name)
+            else:
+                get_logger().info(f"Secret '{name}' not found.")
+
         return result
 
     # ----------------------------------------------------------------------------
@@ -321,16 +313,33 @@ class SecretMgr:
         else:
             get_logger().info(f"Secret '{old_name}' not found.")
         return result
-    
+
     # ----------------------------------------------------------------------------
-    def list_secrets(self) -> list[dict[str, str]]:
+    def list_secrets(self,
+                     include_secret: bool = False) -> list[dict[str, str]]:
         """
         List all registered secrets.
 
+        Args:
+            include_secret (bool): If True, include the secret value in the output.
         Returns:
             list[dict[str, str]]: A list of dictionaries containing secret information.
         """
-        return list(self.secret_data.values())
+        result = []
+        if include_secret:
+            # Include the secret value in the output
+            result = list(self.secret_data.values())
+        else:
+            # Exclude the secret value, only return name, account, and issuer
+            result = [
+                {
+                    'name': sec['name'],
+                    'account': sec['account'],
+                    'issuer': sec['issuer']
+                }
+                for sec in self.secret_data.values()
+            ]
+        return result
 
     # ----------------------------------------------------------------------------
     def __str__(self) -> str:

@@ -60,10 +60,14 @@ def get_with_init(
             '%(asctime)s [%(name)s] [%(levelname)s] %(message)s'
         )
 
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(file_level)
-        logger_obj.addHandler(file_handler)
+        try:
+            file_handler = logging.FileHandler(log_file, encoding="utf-8")
+            file_handler.setFormatter(formatter)
+            file_handler.setLevel(file_level)
+            logger_obj.addHandler(file_handler)
+        except (OSError, PermissionError):
+            # If file handler creation fails, we just skip it and only use console handler
+            pass
 
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)

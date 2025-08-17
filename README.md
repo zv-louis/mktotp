@@ -1,31 +1,32 @@
 # mktotp
 
-A Simple CUI TOTP token generator for use with 2FA services.
+A Simple CUI TOTP secret manager for use with 2FA services.
 
 English | [日本語](README_ja.md)
 
 <!-- TOC tocDepth:2..3 chapterDepth:2..6 -->
 
-- [mktotp](#mktotp)
-  - [Description](#description)
-  - [Features](#features)
-  - [Installation](#installation)
-    - [Using uv (Recommended)](#using-uv-recommended)
-    - [Using traditional Python setup](#using-traditional-python-setup)
-  - [Building Package](#building-package)
-  - [Usage](#usage)
-    - [Using uv](#using-uv)
-    - [After pip installation](#after-pip-installation)
-  - [Command Options](#command-options)
-    - [Common Options](#common-options)
-    - [add Command](#add-command)
-    - [get Command](#get-command)
-    - [list Command](#list-command)
-    - [remove Command](#remove-command)
-    - [rename Command](#rename-command)
-  - [File Storage Location](#file-storage-location)
-  - [Security Notes](#security-notes)
-  - [License](#license)
+- [Description](#description)
+- [Features](#features)
+- [Installation](#installation)
+  - [Using uv (Recommended)](#using-uv-recommended)
+  - [Using traditional Python setup](#using-traditional-python-setup)
+- [Building Package](#building-package)
+- [Usage](#usage)
+  - [Using uv](#using-uv)
+  - [After pip installation](#after-pip-installation)
+  - [Registering as MCP Server](#registering-as-mcp-server)
+- [Command Options](#command-options)
+  - [Common Options](#common-options)
+  - [add Command](#add-command)
+  - [get Command](#get-command)
+  - [list Command](#list-command)
+  - [remove Command](#remove-command)
+  - [rename Command](#rename-command)
+  - [mcp Command](#mcp-command)
+- [File Storage Location](#file-storage-location)
+- [Security Notes](#security-notes)
+- [License](#license)
 
 <!-- /TOC -->
 
@@ -39,6 +40,7 @@ mktotp is a command-line tool for managing TOTP (Time-based One-Time Password) s
 - Generate TOTP tokens for registered secrets
 - List all registered secrets
 - Remove and rename secrets
+- Can be operated using Agent tools when started as a local MCP server
 
 ## Installation
 
@@ -73,7 +75,9 @@ python -m mktotp --help
 
 ## Building Package
 
-To create a module package, run the following command:
+To create a module package, run the following command.  
+The generated package will be saved in the dist directory.  
+The generated package can be installed with pip, etc.  
 
 ```bash
 # Assuming the project is cloned in the mktotp directory
@@ -120,6 +124,34 @@ python -m mktotp get -n "secret_name"
 python -m mktotp list
 python -m mktotp remove -n "secret_name"
 python -m mktotp rename -n "current_secret_name" -nn "new_secret_name"
+```
+
+### Registering as MCP Server
+
+```json
+{
+  // Example configuration for registering as MCP server
+  //
+  // (Note) 
+  // Registration keys may differ depending on the Agent tool used,
+  // so please refer to the manual of each Agent tool you use for detailed procedures.
+  "mcpServers" {
+    "mktotp": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+          "run",
+          "--directory",
+          "${workspaceFolder}",
+          "-m",
+          "mktotp",
+          "mcp",
+          "--mcp-server"
+      ],
+      "env": {},
+    }
+  }
+}
 ```
 
 ## Command Options
@@ -178,6 +210,15 @@ uv run [--directory {project_dir}] -m mktotp rename -n <current_name> -nn <new_n
 
 - `-n, --name`: Current secret name (required)
 - `-nn, --new-name`: New secret name (required)
+
+### mcp Command
+
+Start the module as a local MCP server.  
+You can operate mktotp using Agent tools.
+
+```bash
+uv run [--directory {project_dir}] -m mktotp mcp --mcp-server
+```
 
 ## File Storage Location
 

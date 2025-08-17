@@ -8,9 +8,6 @@ def register_sub_add(subparsers,
                      parent_parser: argparse.ArgumentParser):
     """
     Register the 'add' subcommand to the argument parser.
-
-    Args:
-        arg_parser (argparse.ArgumentParser): The argument parser to register the subcommand with.
     """
     add_parser = subparsers.add_parser(
         'add',
@@ -42,8 +39,6 @@ def register_sub_get(subparsers,
                      parent_parser: argparse.ArgumentParser):
         """
         Register the 'get' subcommand to the argument parser.
-        Args:
-            arg_parser (argparse.ArgumentParser): The argument parser to register the subcommand with.
         """
         get_parser = subparsers.add_parser(
             'get',
@@ -68,9 +63,6 @@ def register_sub_list(subparsers,
                       parent_parser: argparse.ArgumentParser):
     """
     Register the 'list' subcommand to the argument parser.
-
-    Args:
-        arg_parser (argparse.ArgumentParser): The argument parser to register the subcommand with.
     """
     list_parser = subparsers.add_parser(
         'list',
@@ -89,9 +81,6 @@ def register_sub_remove(subparsers,
                         parent_parser: argparse.ArgumentParser):
     """
     Register the 'remove' subcommand to the argument parser.
-
-    Args:
-        arg_parser (argparse.ArgumentParser): The argument parser to register the subcommand with.
     """
     remove_parser = subparsers.add_parser(
         'remove',
@@ -117,9 +106,6 @@ def register_sub_rename(subparsers,
                         parent_parser: argparse.ArgumentParser):
     """
     Register the 'rename' subcommand to the argument parser.
-
-    Args:
-        arg_parser (argparse.ArgumentParser): The argument parser to register the subcommand with.
     """
     rename_parser = subparsers.add_parser(
         'rename',
@@ -144,4 +130,27 @@ def register_sub_rename(subparsers,
     )
     # Set the function to handle the 'rename' command
     rename_parser.set_defaults(handler=handle_rename)
+    return subparsers
+
+
+# ----------------------------------------------------------------------------
+def register_sub_mcp(subparsers,
+                     handle_mcp: callable,
+                     parent_parser: argparse.ArgumentParser):
+    """
+    Register the 'mcp' subcommand to the argument parser.
+    """
+    mcp_parser = subparsers.add_parser(
+        'mcp',
+        help='Subcommand for mcp functions',
+        description='Manage TOTP secrets using MCP tools.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        parents=[parent_parser]
+    )
+    mcp_parser.add_argument(
+        "--mcp-server",
+        action="store_true",
+        help="Run as MCP server"
+    )
+    mcp_parser.set_defaults(handler=handle_mcp)
     return subparsers
