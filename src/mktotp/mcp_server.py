@@ -42,8 +42,9 @@ async def list_server_tools(mcp: FastMCP):
     async with Client(transport=transport) as client:
         result = await client.list_tools()
         for tool in result:
-            print(f"------------------------------------------------")
-            print(f"'{tool.name}' : {tool.description}\n")
+            print(f"------------------------------------------------------------------------------------------------")
+            print(f"## '{tool.name}' ##\n") 
+            print(f"{tool.description}\n")
 
 # -------------------------------------------------------------------------------------------
 # helper for running the test

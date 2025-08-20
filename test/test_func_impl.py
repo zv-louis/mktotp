@@ -85,7 +85,7 @@ class TestFuncImpl:
             assert result[0]["name"] == "new_secret"
             assert result[0]["account"] == "new@example.com"
             assert result[0]["issuer"] == "Test"
-            assert result[0]["secret"] == "JBSWY3DPEHPK3PXT"
+            # Note: secret is not included in the result for security reasons
             
             mock_decode.assert_called_once_with(temp_qr_image_file)
 
@@ -151,7 +151,7 @@ class TestFuncImpl:
 
     def test_gen_token_file_not_found(self):
         """Test token generation with non-existent secrets file"""
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(ValueError, match="Secret for token 'test_secret' not found"):
             gen_token(
                 name="test_secret",
                 secrets_file="nonexistent_secrets.json"
@@ -176,8 +176,9 @@ class TestFuncImpl:
 
     def test_get_secret_list_file_not_found(self):
         """Test secret list retrieval with non-existent file"""
-        with pytest.raises(FileNotFoundError):
-            get_secret_list(secrets_file="nonexistent_secrets.json")
+        # When file doesn't exist, it returns empty list instead of raising FileNotFoundError
+        result = get_secret_list(secrets_file="nonexistent_secrets.json")
+        assert result == []
 
     def test_remove_secrets_success(self, temp_secrets_file):
         """Test successful secret removal"""
@@ -231,11 +232,12 @@ class TestFuncImpl:
 
     def test_remove_secrets_file_not_found(self):
         """Test secret removal with non-existent file"""
-        with pytest.raises(FileNotFoundError):
-            remove_secrets(
-                names=["test_secret"],
-                secrets_file="nonexistent_secrets.json"
-            )
+        # When file doesn't exist, it returns empty list instead of raising FileNotFoundError
+        result = remove_secrets(
+            names=["test_secret"],
+            secrets_file="nonexistent_secrets.json"
+        )
+        assert result == []
 
     def test_rename_secret_success(self, temp_secrets_file):
         """Test successful secret renaming"""
@@ -272,12 +274,13 @@ class TestFuncImpl:
 
     def test_rename_secret_file_not_found(self):
         """Test secret renaming with non-existent file"""
-        with pytest.raises(FileNotFoundError):
-            rename_secret(
-                name="test_secret",
-                new_name="new_name",
-                secrets_file="nonexistent_secrets.json"
-            )
+        # When file doesn't exist, it returns False instead of raising FileNotFoundError
+        result = rename_secret(
+            name="test_secret",
+            new_name="new_name",
+            secrets_file="nonexistent_secrets.json"
+        )
+        assert result is False
 
     def test_functions_with_default_secrets_file(self):
         """Test functions with None/default secrets file parameter"""

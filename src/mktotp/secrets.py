@@ -7,6 +7,7 @@ import datetime
 import pyotp
 from pathlib import Path
 from filelock import FileLock, Timeout
+from urllib.parse import urlparse, parse_qs, unquote
 
 from .logutil import get_logger
 from .permutil import set_secure_permissions, check_file_permissions
@@ -110,7 +111,14 @@ class SecretMgr:
                 if not check_file_permissions(self.secrets_file):
                     get_logger().warning(f"Fixing file permissions on {self.secrets_file}")
                     set_secure_permissions(self.secrets_file)
+            else:
+                # If the file does not exist, create an empty secrets file
+                self.secrets_file.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                with open(self.secrets_file, 'w', encoding='utf-8') as file:
+                    json.dump({'secrets': [], 'version': '1.0', 'last_update': datetime.datetime.now().isoformat()}, file, indent=4)
+                set_secure_permissions(self.secrets_file)
 
+            # Load the secrets from the JSON file
             with open(self.secrets_file, 'r', encoding='utf-8') as file:
                 raw_data = json.load(file)
 
@@ -202,26 +210,61 @@ class SecretMgr:
         cnt = 1
         for qrc_data in qrc_datas:
             try:
-                totp = pyotp.parse_uri(qrc_data)  # Validate the QR code data
-                if totp:
-                    account  = totp.name
-                    issuer   = totp.issuer
-                    secret   = totp.secret
-                    sec_name = name if cnt == 1 else f'{name}_{cnt}'
-                    sec_data = {
-                        'name': sec_name,
-                        'account': account,
-                        'issuer': issuer,
-                        'secret': secret
-                    }
-                    self.secret_data[sec_name] = sec_data
-                    result.append(sec_data)
-                    get_logger().debug(f"Registered secret '{sec_name}' for account '{account}' with issuer '{issuer}'.")
-                    # Increment the counter for the next secret
-                    cnt += 1
-                else:
+                # Manual parsing to handle issuer mismatch issues
+                if not qrc_data.startswith('otpauth://totp/'):
                     get_logger().error(f"Invalid QR code data: {qrc_data}")
                     raise ValueError(f"Invalid QR code data: {qrc_data}")
+                
+                parsed_url = urlparse(qrc_data)
+                query_params = parse_qs(parsed_url.query)
+                
+                # Extract secret
+                if 'secret' not in query_params:
+                    get_logger().error(f"Invalid QR code data: missing secret parameter")
+                    raise ValueError(f"Invalid QR code data: missing secret parameter")
+                secret = query_params['secret'][0]
+                
+                # Extract issuer (prefer from parameter over label)
+                issuer = query_params.get('issuer', [''])[0]
+                
+                # Extract account from path
+                path_parts = unquote(parsed_url.path).strip('/').split(':', 1)
+                if len(path_parts) == 2:
+                    # Format: issuer:account
+                    label_issuer, account = path_parts
+                    if not issuer:
+                        issuer = label_issuer
+                elif len(path_parts) == 1:
+                    # Format: account only
+                    account = path_parts[0]
+                else:
+                    get_logger().error(f"Invalid QR code data: cannot parse account")
+                    raise ValueError(f"Invalid QR code data: cannot parse account")
+                
+                # Validate secret format (base32)
+                try:
+                    pyotp.TOTP(secret)
+                except Exception:
+                    get_logger().error(f"Invalid secret format: {secret}")
+                    raise ValueError(f"Invalid secret format: {secret}")
+                
+                sec_name = name if cnt == 1 else f'{name}_{cnt}'
+                sec_data = {
+                    'name': sec_name,
+                    'account': account,
+                    'issuer': issuer,
+                    'secret': secret
+                }
+                sec_data_for_result = {
+                    'name': sec_name,
+                    'account': account,
+                    'issuer': issuer
+                }
+                self.secret_data[sec_name] = sec_data
+                result.append(sec_data_for_result)
+                get_logger().debug(f"Registered secret '{sec_name}' for account '{account}' with issuer '{issuer}'.")
+                # Increment the counter for the next secret
+                cnt += 1
             except (ValueError, Exception) as e:
                 get_logger().error(f"Invalid QR code data: {qrc_data}")
                 raise ValueError(f"Invalid QR code data: {qrc_data}")

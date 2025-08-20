@@ -12,3 +12,7 @@ wheels/
 
 # uv.lock
 uv.lock
+
+# temporary test files
+nonexistent_secrets.lock
+nonexistent_secrets.json
