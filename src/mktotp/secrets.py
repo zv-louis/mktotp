@@ -1,7 +1,6 @@
 ﻿# encoding: utf-8-sig
 
 import os
-import sys
 import json
 import datetime
 import pyotp

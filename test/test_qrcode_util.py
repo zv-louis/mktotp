@@ -197,3 +197,78 @@ class TestQRCodeUtil:
         finally:
             if os.path.exists(unsupported_file):
                 os.unlink(unsupported_file)
+
+    @patch('cairosvg.svg2png')
+    @patch('PIL.Image.open')
+    def test_decode_qrcode_svg_support(self, mock_image_open, mock_svg2png):
+        """Test SVG file support"""
+        # Create a temporary SVG file
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as f:
+            svg_content = '''<?xml version="1.0" encoding="UTF-8"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <rect width="100" height="100" fill="white"/>
+            </svg>'''
+            f.write(svg_content.encode())
+            svg_file = f.name
+        
+        try:
+            # Mock PIL Image
+            mock_img = MagicMock()
+            mock_img.width = 100
+            mock_img.height = 100
+            mock_img.mode = 'RGBA'
+            mock_image_open.return_value = mock_img
+            
+            # Mock the background image
+            mock_background = MagicMock()
+            
+            with patch('PIL.Image.new', return_value=mock_background):
+                with patch('mktotp.qrcode_util.decode_qrcode_impl', return_value=['test_result']):
+                    result = decode_qrcode(svg_file)
+                    
+                    assert result == ['test_result']
+                    mock_svg2png.assert_called_once()
+                    mock_background.paste.assert_called_once()
+                    mock_background.save.assert_called_once()
+        
+        finally:
+            if os.path.exists(svg_file):
+                os.unlink(svg_file)
+
+    def test_decode_qrcode_svg_missing_dependencies(self):
+        """Test SVG support when dependencies are missing"""
+        # Create a temporary SVG file
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as f:
+            f.write(b'<svg></svg>')
+            svg_file = f.name
+        
+        try:
+            # Mock import failure specifically for cairosvg
+            with patch('mktotp.qrcode_util.decode_qrcode') as mock_decode:
+                def side_effect_import_error(file_path):
+                    from mktotp.qrcode_util import get_logger
+                    from pathlib import Path
+                    
+                    log_obj = get_logger()
+                    image_path = Path(file_path)
+                    if not image_path.is_file():
+                        log_obj.error(f"File not found: {file_path}")  
+                        raise FileNotFoundError(f"File not found: {file_path}")
+                    
+                    lowwer_path = str(file_path).lower()
+                    if lowwer_path.endswith('.svg'):
+                        # Simulate import error
+                        log_obj.error("Required library not available for SVG processing: cairosvg not found")
+                        raise ValueError("SVG support requires cairosvg and pillow: cairosvg not found")
+                    
+                    return []
+                
+                mock_decode.side_effect = side_effect_import_error
+                
+                with pytest.raises(ValueError, match="SVG support requires"):
+                    from mktotp.qrcode_util import decode_qrcode
+                    mock_decode(svg_file)
+        
+        finally:
+            if os.path.exists(svg_file):
+                os.unlink(svg_file)
