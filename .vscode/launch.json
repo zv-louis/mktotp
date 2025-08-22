@@ -29,7 +29,7 @@
             "request": "launch",
             "module": "mktotp",
             "args": [
-                "list"
+                "add", "-nn", "github", "-f", "/home/keiichi/work/pw_repos/sony_vpn/github_mfa.svg"
             ],
             "console": "integratedTerminal",
             // "stopOnEntry": true,

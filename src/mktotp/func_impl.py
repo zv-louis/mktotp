@@ -12,9 +12,13 @@ def register_secret(qr_code_file: str | os.PathLike,
     Register a new secret from a QR code file.
 
     Args:
-        qr_code_file (str | os.PathLike): Path to the QR code file.
-        new_name (str): The name to assign to the new secret.
-        secrets_file (str | os.PathLike): Path to the secrets file.
+        qr_code_file (str | os.PathLike):
+            Path to the QR code file.
+            Supported formats are PNG, JPEG, TIFF, BMP, and SVG.
+        new_name (str):
+            The name to assign to the new secret.
+        secrets_file (str | os.PathLike):
+            Path to the secrets file.
     Returns:
         list[dict[str, str]]: A list of dictionaries containing the new secret's details.
     
@@ -37,8 +41,10 @@ def gen_token(name: str,
     Generate a TOTP token for a given secret name.
 
     Args:
-        name (str): The name of the secret for which to generate the token.
-        secrets_file (str | os.PathLike): Path to the secrets file.
+        name (str):
+            The name of the secret for which to generate the token.
+        secrets_file (str | os.PathLike):
+            Path to the secrets file.
     
     Returns:
         str: The generated TOTP token.
@@ -58,10 +64,12 @@ def get_secret_list(secrets_file: str | os.PathLike):
     Get a list of all secrets in the secrets file.
 
     Args:
-        secrets_file (str | os.PathLike): Path to the secrets file.
+        secrets_file (str | os.PathLike):
+            Path to the secrets file.
     
     Returns:
-        list[dict[str, str]]: A list of dictionaries containing secret names and their details.
+        list[dict[str, str]]:
+            A list of dictionaries containing secret names and their details.
     Raises:
         FileNotFoundError: If the secrets file does not exist.
         ValueError: If the secrets file is invalid or cannot be read.
@@ -80,15 +88,19 @@ def remove_secrets(names: list[str],
     Remove secrets by their names.
 
     Args:
-        names (list[str]): List of secret names to remove.
-        secrets_file (str | os.PathLike): Path to the secrets file.
+        names (list[str]):
+            List of secret names to remove.
+        secrets_file (str | os.PathLike):
+            Path to the secrets file.
     
     Returns:
         list[str]: A list of names of the removed secrets.
     
     Raises:
-        FileNotFoundError: If the secrets file does not exist.
-        ValueError: If the names are not found in the secrets file.
+        FileNotFoundError:
+            If the secrets file does not exist.
+        ValueError:
+            If the names are not found in the secrets file.
     """
     result = []
     with SecretMgr(secrets_file) as mgr:
@@ -106,16 +118,21 @@ def rename_secret(name: str,
     Rename an existing secret.
 
     Args:
-        name (str): The current name of the secret to rename.
-        new_name (str): The new name to assign to the secret.
-        secrets_file (str | os.PathLike): Path to the secrets file.
+        name (str):
+            The current name of the secret to rename.
+        new_name (str):
+            The new name to assign to the secret.
+        secrets_file (str | os.PathLike):
+            sPath to the secrets file.
     
     Returns:
         bool: True if the secret was renamed successfully, False otherwise.
     
     Raises:
-        FileNotFoundError: If the secrets file does not exist.
-        ValueError: If the secret name is not found in the secrets file.
+        FileNotFoundError:
+            If the secrets file does not exist.
+        ValueError:
+            If the secret name is not found in the secrets file.
     """
     result = False
     with SecretMgr(secrets_file) as mgr:

@@ -2,11 +2,10 @@
 
 import asyncio
 import traceback
-from pathlib import Path
 
 from fastmcp import Client, FastMCP
 from fastmcp.client.transports import FastMCPTransport
-from typing import Annotated, Any
+from typing import Annotated
 from pydantic import Field
 
 from .mcp_impl import *
@@ -75,6 +74,7 @@ async def mktotp_register_secret(
     Args:
         qr_code_image_file_path (str):
             Path to the QR code image file.
+            Supported formats are PNG, JPEG, TIFF, BMP, and SVG.
         new_name (str):
             Name to assign to the new secret.
         secrets_file (str | None):

@@ -1,10 +1,7 @@
 ﻿# encoding: utf-8-sig
 
 from argparse import ArgumentParser
-from pathlib import Path
 
-from .secrets import SecretMgr
-from .qrcode_util import decode_qrcode
 from .logutil import get_logger
 from .func_impl import *
 from .cmdparam import *
