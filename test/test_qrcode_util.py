@@ -198,10 +198,14 @@ class TestQRCodeUtil:
             if os.path.exists(unsupported_file):
                 os.unlink(unsupported_file)
 
-    @patch('cairosvg.svg2png')
-    @patch('PIL.Image.open')
-    def test_decode_qrcode_svg_support(self, mock_image_open, mock_svg2png):
+    def test_decode_qrcode_svg_support(self):
         """Test SVG file support"""
+        try:
+            import cairosvg
+            import PIL.Image
+        except (ImportError, OSError) as e:
+            pytest.skip(f"SVG support requires cairosvg and PIL with Cairo library: {e}")
+        
         # Create a temporary SVG file
         with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as f:
             svg_content = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -212,24 +216,38 @@ class TestQRCodeUtil:
             svg_file = f.name
         
         try:
-            # Mock PIL Image
-            mock_img = MagicMock()
-            mock_img.width = 100
-            mock_img.height = 100
-            mock_img.mode = 'RGBA'
-            mock_image_open.return_value = mock_img
-            
-            # Mock the background image
-            mock_background = MagicMock()
-            
-            with patch('PIL.Image.new', return_value=mock_background):
-                with patch('mktotp.qrcode_util.decode_qrcode_impl', return_value=['test_result']):
-                    result = decode_qrcode(svg_file)
-                    
-                    assert result == ['test_result']
-                    mock_svg2png.assert_called_once()
-                    mock_background.paste.assert_called_once()
-                    mock_background.save.assert_called_once()
+            # Mock all the required functions
+            with patch('cairosvg.svg2png') as mock_svg2png, \
+                 patch('PIL.Image.open') as mock_image_open, \
+                 patch('PIL.Image.new') as mock_image_new, \
+                 patch('mktotp.qrcode_util.decode_qrcode_impl') as mock_decode_impl, \
+                 patch('tempfile.NamedTemporaryFile') as mock_temp_file:
+                
+                # Mock tempfile.NamedTemporaryFile
+                mock_temp_context = MagicMock()
+                mock_temp_context.name = 'temp_file.png'
+                mock_temp_file.return_value.__enter__.return_value = mock_temp_context
+                
+                # Mock PIL Image
+                mock_img = MagicMock()
+                mock_img.width = 100
+                mock_img.height = 100
+                mock_img.mode = 'RGBA'
+                mock_image_open.return_value = mock_img
+                
+                # Mock the background image
+                mock_background = MagicMock()
+                mock_image_new.return_value = mock_background
+                
+                # Mock decode_qrcode_impl result
+                mock_decode_impl.return_value = ['test_result']
+                
+                result = decode_qrcode(svg_file)
+                
+                assert result == ['test_result']
+                mock_svg2png.assert_called_once()
+                mock_background.paste.assert_called_once()
+                mock_background.save.assert_called_once()
         
         finally:
             if os.path.exists(svg_file):
