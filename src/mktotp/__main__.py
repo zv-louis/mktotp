@@ -141,13 +141,12 @@ def main():
     try:
         # Parse the command line arguments
         args = argp.parse_args()
-        # Initialize the logger with the specified verbosity level
-        _ = get_logger(verbose_level=args.verbose)
-
         # If no command is specified, show help
         if args.command is None:
             argp.print_help()
         else:
+            # Initialize the logger with the specified verbosity level
+            _ = get_logger(verbose_level=args.verbose)
             # Execute the handler for the specified command
             if hasattr(args, 'handler'):
                 args.handler(args)
