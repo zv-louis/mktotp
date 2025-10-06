@@ -362,12 +362,12 @@ class TestFuncImpl:
         assert result is False
 
     def test_functions_with_default_secrets_file(self):
-        """Test functions with None/default secrets file parameter"""
+        """Test functions with empty string/default secrets file parameter"""
         # These should either work with default file or handle missing file gracefully
         
         # Test with temporary file to avoid affecting real data
         try:
-            result = get_secret_list(secrets_file=None)
+            result = get_secret_list(secrets_file="")
             # If it succeeds, it means default file exists
             assert isinstance(result, list)
         except (FileNotFoundError, PermissionError, ValueError):
@@ -375,19 +375,19 @@ class TestFuncImpl:
             pass
         
         try:
-            gen_token(name="nonexistent_test_name", secrets_file=None)
+            gen_token(name="nonexistent_test_name", secrets_file="")
         except (FileNotFoundError, PermissionError, ValueError):
             # These exceptions are expected
             pass
         
         try:
-            remove_secrets(names=["nonexistent_test_name"], secrets_file=None)
+            remove_secrets(names=["nonexistent_test_name"], secrets_file="")
         except (FileNotFoundError, PermissionError, ValueError):
             # These exceptions are expected
             pass
         
         try:
-            rename_secret(name="nonexistent_old", new_name="nonexistent_new", secrets_file=None)
+            rename_secret(name="nonexistent_old", new_name="nonexistent_new", secrets_file="")
         except (FileNotFoundError, PermissionError, ValueError):
             # These exceptions are expected
             pass

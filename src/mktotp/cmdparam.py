@@ -27,9 +27,35 @@ def register_sub_add(subparsers,
         '-f',
         '--file',
         type=str,
-        required=True,
+        required=False,
+        default=None,
         help='Path to the file containing the QR code data.'
     )
+    add_parser.add_argument(
+        '-ss',
+        '--secrets',
+        type=str,
+        required=False,
+        default=None,
+        help='Secret string in base32 format.'
+    )
+    add_parser.add_argument(
+        '-i',
+        '--issuer',
+        type=str,
+        required=False,
+        default=None,
+        help='Issuer of the secret.'
+    )
+    add_parser.add_argument(
+        '-a',
+        '--account',
+        type=str,
+        required=False,
+        default=None,
+        help='Account associated with the secret.'
+    )
+    # Set the function to handle the 'add' command
     add_parser.set_defaults(handler=handle_add)
     return subparsers
 

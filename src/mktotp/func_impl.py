@@ -35,6 +35,43 @@ def register_secret(qr_code_file: str | os.PathLike,
     return result
 
 # ----------------------------------------------------------------------------
+def register_secret_manually(new_name: str,
+                             secret: str,
+                             issuer: str,
+                             account: str,
+                             secrets_file: str | os.PathLike) -> list[dict[str, str]]:
+    """
+    Register a new secret manually with the given details.
+    Args:
+        new_name (str):
+            The name to assign to the new secret. mandatory.
+        secret (str):
+            The secret value in base32 format. mandatory.
+        issuer (str):
+            The issuer of the secret. if empty, use name as issuer.
+        account (str):
+            The account associated with the secret. if empty, use name as account.
+        secrets_file (str | os.PathLike):
+            Path to the secrets file.
+    Returns:
+        list[dict[str, str]]: A dictionary containing the new secret's details.
+    Raises:
+        FileNotFoundError: If the secrets file does not exist.
+        ValueError: If the name is already registered or secret format is invalid.
+    """
+
+    result = []
+    with SecretMgr(secrets_file) as mgr:
+        mgr.load()  # Load existing secrets
+        dic = mgr.register_secret_manually(new_name,
+                                              secret,
+                                              issuer,
+                                              account)
+        result.append(dic)
+        mgr.save()
+    return result
+
+# ----------------------------------------------------------------------------
 def gen_token(name: str,
               secrets_file: str | os.PathLike) -> str:
     """

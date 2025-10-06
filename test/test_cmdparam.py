@@ -58,13 +58,111 @@ class TestCmdParam:
         
         register_sub_add(subparsers, mock_handler, parent_parser)
         
-        # Test missing new_name
+        # Test missing new_name (only required argument)
         with pytest.raises(SystemExit):
             parser.parse_args(['add', '-f', 'test_file.png'])
+    
+    def test_register_sub_add_with_secrets_string(self, main_parser, mock_handler, parent_parser):
+        """Test register_sub_add with secrets string instead of file"""
+        parser, subparsers = main_parser
         
-        # Test missing file
-        with pytest.raises(SystemExit):
-            parser.parse_args(['add', '-nn', 'test_name'])
+        register_sub_add(subparsers, mock_handler, parent_parser)
+        
+        # Test with secrets string
+        args = parser.parse_args(['add', '-nn', 'test_name', '-ss', 'JBSWY3DPEHPK3PXP'])
+        
+        assert args.command == 'add'
+        assert args.new_name == 'test_name'
+        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.file is None
+        assert hasattr(args, 'handler')
+        assert args.handler == mock_handler
+
+    def test_register_sub_add_with_issuer_and_account(self, main_parser, mock_handler, parent_parser):
+        """Test register_sub_add with issuer and account arguments"""
+        parser, subparsers = main_parser
+        
+        register_sub_add(subparsers, mock_handler, parent_parser)
+        
+        # Test with issuer and account
+        args = parser.parse_args([
+            'add', '-nn', 'test_name', 
+            '-ss', 'JBSWY3DPEHPK3PXP',
+            '-i', 'TestIssuer',
+            '-a', 'user@example.com'
+        ])
+        
+        assert args.command == 'add'
+        assert args.new_name == 'test_name'
+        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.issuer == 'TestIssuer'
+        assert args.account == 'user@example.com'
+        assert hasattr(args, 'handler')
+        assert args.handler == mock_handler
+
+    def test_register_sub_add_with_all_optional_args(self, main_parser, mock_handler, parent_parser):
+        """Test register_sub_add with all optional arguments"""
+        parser, subparsers = main_parser
+        
+        register_sub_add(subparsers, mock_handler, parent_parser)
+        
+        # Test with all optional arguments
+        args = parser.parse_args([
+            'add', '-nn', 'test_name',
+            '-f', 'qrcode.png',
+            '-ss', 'JBSWY3DPEHPK3PXP',
+            '-i', 'GitHub',
+            '-a', 'user@example.com'
+        ])
+        
+        assert args.command == 'add'
+        assert args.new_name == 'test_name'
+        assert args.file == 'qrcode.png'
+        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.issuer == 'GitHub'
+        assert args.account == 'user@example.com'
+        assert hasattr(args, 'handler')
+        assert args.handler == mock_handler
+
+    def test_register_sub_add_default_values(self, main_parser, mock_handler, parent_parser):
+        """Test register_sub_add default values for optional arguments"""
+        parser, subparsers = main_parser
+        
+        register_sub_add(subparsers, mock_handler, parent_parser)
+        
+        # Test with only required argument
+        args = parser.parse_args(['add', '-nn', 'test_name'])
+        
+        assert args.command == 'add'
+        assert args.new_name == 'test_name'
+        assert args.file is None
+        assert args.secrets is None
+        assert args.issuer is None
+        assert args.account is None
+        assert hasattr(args, 'handler')
+        assert args.handler == mock_handler
+
+    def test_register_sub_add_long_form_arguments(self, main_parser, mock_handler, parent_parser):
+        """Test register_sub_add with long-form argument names"""
+        parser, subparsers = main_parser
+        
+        register_sub_add(subparsers, mock_handler, parent_parser)
+        
+        # Test with long-form arguments
+        args = parser.parse_args([
+            'add', '--new-name', 'test_name',
+            '--file', 'qrcode.png',
+            '--secrets', 'JBSWY3DPEHPK3PXP',
+            '--issuer', 'Google',
+            '--account', 'test@gmail.com'
+        ])
+        
+        assert args.command == 'add'
+        assert args.new_name == 'test_name'
+        assert args.file == 'qrcode.png'
+        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.issuer == 'Google'
+        assert args.account == 'test@gmail.com'
 
     def test_register_sub_get(self, main_parser, mock_handler, parent_parser):
         """Test register_sub_get function"""
@@ -290,7 +388,6 @@ class TestCmdParam:
         
         # Test that SystemExit is raised for missing required arguments
         required_arg_tests = [
-            (['add', '-nn', 'test'], "file is required for add"),
             (['add', '-f', 'test.png'], "new_name is required for add"),
             (['get'], "name is required for get"),
             (['remove'], "name is required for remove"),

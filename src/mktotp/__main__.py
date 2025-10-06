@@ -9,6 +9,22 @@ from .cmdparam import *
 from .mcp_server import run_as_mcp_server, disp_tools
 
 # ----------------------------------------------------------------------------
+def get_strparam(str_param: str | None) -> str | None:
+    """
+    Helper function to return string parameter or None if empty.
+    convert string 'null' to None.
+    
+    Args:
+        str_param (str | None): The input string parameter.
+    Returns:
+        str | None: The original string or None if empty or 'null'.
+    """
+    ret_val = None
+    if str_param and str_param.lower() != 'null':
+        ret_val = str_param
+    return ret_val
+
+# ----------------------------------------------------------------------------
 def handle_add(args):
     """
     Handle the 'add' command to register a new secret from a QR code file.
@@ -16,10 +32,17 @@ def handle_add(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    secrets_file = args.secrets_file if args.secrets_file else None
-    result = register_secret(qr_code_file=args.file,
-                             new_name=args.new_name,
-                             secrets_file=secrets_file)
+    result = []
+    secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
+    if secrets_file:
+        result = register_secret(qr_code_file=args.file,
+                                new_name=args.new_name,
+                                secrets_file=secrets_file)
+    else:
+        result_dic = register_secret_manually(name=args.new_name,
+                                              secret=args.secrets,
+                                              issuer=args.issuer,
+                                              account=args.account)
     for sec in result:
         print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
@@ -31,8 +54,9 @@ def handle_get(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
+    secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
     token = gen_token(name=args.name,
-                      secrets_file=args.secrets_file)
+                      secrets_file=secrets_file)
     if token:
         print(token)
 
@@ -44,7 +68,7 @@ def handle_list(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    secrets_file = args.secrets_file if args.secrets_file else None
+    secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
     secrets = get_secret_list(secrets_file=secrets_file)
     if not secrets:
         print("No secrets found.")
@@ -61,7 +85,7 @@ def handle_remove(args):
         args (argparse.Namespace): Parsed command line arguments.
     """
     result = []
-    secrets_file = args.secrets_file if args.secrets_file else None
+    secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
     names = [args.name]
     result = remove_secrets(names=names,
                             secrets_file=secrets_file)
@@ -78,7 +102,7 @@ def handle_rename(args):
     Args:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    secrets_file = args.secrets_file if args.secrets_file else None
+    secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
     result = rename_secret(name=args.name,
                            new_name=args.new_name,
                            secrets_file=secrets_file)

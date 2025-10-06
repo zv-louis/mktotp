@@ -270,6 +270,50 @@ class SecretMgr:
         return result
 
     # ----------------------------------------------------------------------------
+    def register_secret_manually(self,
+                                 name: str,
+                                 secret: str,
+                                 issuer: str = None,
+                                 account: str = None) -> dict[str, str]:
+        """
+        Register a new secret manually with the given details.
+
+        Args:
+            name (str): The name of the secret. mandatory.
+            issuer (str): The issuer of the secret. if empty, use name as issuer.
+            account (str): The account associated with the secret. if empty, use name as account.
+            secret (str): The secret value in base32 format.
+        Raises:
+            ValueError: If the name is already registered or secret format is invalid.
+        """
+        result = {}
+        try:
+            # Validate secret format (base32)
+            try:
+                pyotp.TOTP(secret)
+            except Exception:
+                get_logger().error(f"Invalid secret format: {secret}")
+                raise ValueError(f"Invalid secret format: {secret}")
+            sec_data = {
+                'name': name,
+                'account': account if account else name,
+                'issuer': issuer if issuer else name,
+                'secret': secret
+            }
+            sec_data_for_result = {
+                'name': name,
+                'account': account if account else name,
+                'issuer': issuer if issuer else name
+            }
+            self.secret_data[name] = sec_data
+            result = sec_data_for_result
+            get_logger().debug(f"Registered secret '{name}' for account '{account}' with issuer '{issuer}'.")
+        except (ValueError, Exception) as e:
+            get_logger().error(f"Failed to register secret '{name}': {e}")
+            raise ValueError(f"Failed to register secret '{name}': {e}")
+        return result
+
+    # ----------------------------------------------------------------------------
     def save(self) -> None:
         """
         Save the current secrets to the JSON file.

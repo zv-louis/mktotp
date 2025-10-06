@@ -199,7 +199,7 @@ class TestMCPImpl:
             await mktotp_register_secret_impl(
                 qr_code_image_file_path="nonexistent.png",
                 new_name="test",
-                secrets_file=None
+                secrets_file=""
             )
         
         # Test empty secret name
@@ -207,7 +207,7 @@ class TestMCPImpl:
             await mktotp_register_secret_impl(
                 qr_code_image_file_path=temp_qr_image_file,
                 new_name="",
-                secrets_file=None
+                secrets_file=""
             )
 
     @pytest.mark.asyncio
@@ -252,12 +252,12 @@ class TestMCPImpl:
 
     @pytest.mark.asyncio
     async def test_mktotp_get_secret_info_list_impl_none_file(self):
-        """Test mktotp_get_secret_info_list_impl with None file"""
+        """Test mktotp_get_secret_info_list_impl with empty string file"""
         with patch('mktotp.mcp_impl.get_secret_list') as mock_get_list:
             mock_get_list.return_value = []
             
             result = await mktotp_get_secret_info_list_impl(
-                secrets_file=None
+                secrets_file=""
             )
             
             assert result == []
@@ -357,7 +357,7 @@ class TestMCPImpl:
 
     @pytest.mark.asyncio
     async def test_all_mcp_functions_with_none_secrets_file(self, temp_qr_image_file):
-        """Test all MCP functions with None secrets file"""
+        """Test all MCP functions with empty string secrets file (default)"""
         with patch('mktotp.mcp_impl.register_secret') as mock_register, \
              patch('mktotp.mcp_impl.gen_token') as mock_gen_token, \
              patch('mktotp.mcp_impl.get_secret_list') as mock_get_list, \
@@ -370,12 +370,12 @@ class TestMCPImpl:
             mock_remove.return_value = []
             mock_rename.return_value = True
             
-            # All should work with None secrets_file
-            await mktotp_register_secret_impl(temp_qr_image_file, "test", None)
-            await mktotp_generate_token_impl("test", None)
-            await mktotp_get_secret_info_list_impl(None)
-            await mktotp_remove_secrets_impl(["test"], None)
-            await mktotp_rename_secret_impl("old", "new", None)
+            # All should work with empty string secrets_file (default)
+            await mktotp_register_secret_impl(temp_qr_image_file, "test", "")
+            await mktotp_generate_token_impl("test", "")
+            await mktotp_get_secret_info_list_impl("")
+            await mktotp_remove_secrets_impl(["test"], "")
+            await mktotp_rename_secret_impl("old", "new", "")
 
     @pytest.mark.asyncio
     async def test_all_mcp_functions_with_empty_string_secrets_file(self, temp_qr_image_file):

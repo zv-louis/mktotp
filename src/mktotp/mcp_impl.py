@@ -101,7 +101,7 @@ def validate_secret_name(name: str, operation: str) -> None:
 async def mktotp_register_secret_impl(
         qr_code_image_file_path:  Annotated[str, Field(description="Path to the QR code image file.")],
         new_name: Annotated[str, Field(description="Name to assign to the new secret.")],
-        secrets_file: Annotated[str | None, Field(description="Path to the secrets file. If None, the default secrets file will be used.")],
+        secrets_file: Annotated[str, Field(description="Path to the secrets file. If empty string, the default secrets file will be used.")],
     ) -> list[dict[str, str]]:
     """
     Register a new secret from a QR code image file and return the details of the registered secret.
@@ -111,8 +111,8 @@ async def mktotp_register_secret_impl(
             Path to the QR code image file.
         new_name (str):
             Name to assign to the new secret.
-        secrets_file (str | None):
-            Path to the secrets file. If None, the default secrets file will be used.
+        secrets_file (str):
+            Path to the secrets file. If empty string, the default secrets file will be used.
     Returns:
         list[dict[str, str]]: List of dictionaries containing the details of the registered secret.
     Raises:
@@ -122,7 +122,7 @@ async def mktotp_register_secret_impl(
     logger = get_logger()
     validate_file_path(qr_code_image_file_path, "register_secret", required=True)
     validate_secret_name(new_name, "register_secret")
-    if secrets_file:
+    if secrets_file and secrets_file.strip():
         validate_file_path(secrets_file, "register_secret", required=False)
 
     logger.info(f"Registering secret '{new_name}' from QR code: {qr_code_image_file_path}")
@@ -138,7 +138,7 @@ async def mktotp_register_secret_impl(
 # mcp tool for generating TOTP token
 async def mktotp_generate_token_impl(
         secret_name: Annotated[str, Field(description="Name of the secret for which to generate the token.")],
-        secrets_file: Annotated[str | None, Field(description="Path to the secrets file. if None, the default secrets file will be used.")],
+        secrets_file: Annotated[str, Field(description="Path to the secrets file. If empty string, the default secrets file will be used.")],
     ) -> str:
     """
     Generate a TOTP token for a given secret name.
@@ -146,8 +146,8 @@ async def mktotp_generate_token_impl(
     Args:
         secret_name (str):
             Name of the secret for which to generate the token.
-        secrets_file (str | None):
-            Path to the secrets file. If None, the default secrets file will be used.
+        secrets_file (str):
+            Path to the secrets file. If empty string, the default secrets file will be used.
     Returns:
         str: The generated TOTP token.
     Raises:
@@ -156,7 +156,7 @@ async def mktotp_generate_token_impl(
     # Input validation
     logger = get_logger()
     validate_secret_name(secret_name, "generate_token")
-    if secrets_file:
+    if secrets_file and secrets_file.strip():
         validate_file_path(secrets_file, "generate_token", required=True)
 
     logger.info(f"Generating TOTP token for secret: {secret_name}")
@@ -171,14 +171,14 @@ async def mktotp_generate_token_impl(
 # -------------------------------------------------------------------------------------------
 # mcp tool for getting secret information list
 async def mktotp_get_secret_info_list_impl(
-        secrets_file: Annotated[str | None, Field(description="Path to the secrets file. If None, the default secrets file will be used.")],
+        secrets_file: Annotated[str, Field(description="Path to the secrets file. If empty string, the default secrets file will be used.")],
     ) -> list[dict[str, str]]:
     """
     Get a list of all secret info in the secrets file without the secret values.
 
     Args:
-        secrets_file (str | None):
-            Path to the secrets file. If None, the default secrets file will be used.
+        secrets_file (str):
+            Path to the secrets file. If empty string, the default secrets file will be used.
     Returns:
         list[dict[str, str]]: A list of dictionaries containing secret names and their details.
     Raises:
@@ -187,7 +187,7 @@ async def mktotp_get_secret_info_list_impl(
 
     logger = get_logger()
     # Input validation
-    if secrets_file:
+    if secrets_file and secrets_file.strip():
         validate_file_path(secrets_file, "get_secret_info_list", required=True)
 
     logger.info("Retrieving secret information list")
@@ -203,7 +203,7 @@ async def mktotp_get_secret_info_list_impl(
 # mcp tool for removing secrets
 async def mktotp_remove_secrets_impl(
         secret_names: Annotated[list[str], Field(description="List of secret names to remove.")],
-        secrets_file: Annotated[str | None, Field(description="Path to the secrets file. If None, the default secrets file will be used.")],
+        secrets_file: Annotated[str, Field(description="Path to the secrets file. If empty string, the default secrets file will be used.")],
     ) -> list[str]:
     """
     Remove secrets by their names from the secrets file.
@@ -211,8 +211,8 @@ async def mktotp_remove_secrets_impl(
     Args:
         secret_names (list[str]):
             List of secret names to remove.
-        secrets_file (str | None):
-            Path to the secrets file. If None, the default secrets file will be used.
+        secrets_file (str):
+            Path to the secrets file. If empty string, the default secrets file will be used.
     Returns:
         list[str]: A list of names of the removed secrets.
     Raises:
@@ -226,7 +226,7 @@ async def mktotp_remove_secrets_impl(
     for name in secret_names:
         validate_secret_name(name, "remove_secrets")
 
-    if secrets_file:
+    if secrets_file and secrets_file.strip():
         validate_file_path(secrets_file, "remove_secrets", required=True)
 
     logger.info(f"Removing {len(secret_names)} secret(s): {', '.join(secret_names)}")
@@ -243,7 +243,7 @@ async def mktotp_remove_secrets_impl(
 async def mktotp_rename_secret_impl(
         old_name: Annotated[str, Field(description="Current name of the secret to rename.")],
         new_name: Annotated[str, Field(description="New name to assign to the secret.")],
-        secrets_file: Annotated[str | None, Field(description="Path to the secrets file. If None, the default secrets file will be used.")],
+        secrets_file: Annotated[str, Field(description="Path to the secrets file. If empty string, the default secrets file will be used.")],
     ) -> bool:
     """
     Rename an existing secret in the secrets file.
@@ -253,8 +253,8 @@ async def mktotp_rename_secret_impl(
             Current name of the secret to rename.
         new_name (str):
             New name to assign to the secret.
-        secrets_file (str | None):
-            Path to the secrets file. If None, the default secrets file will be used.
+        secrets_file (str):
+            Path to the secrets file. If empty string, the default secrets file will be used.
     Returns:
         bool: True if the secret was renamed successfully, False otherwise.
     Raises:
@@ -267,7 +267,7 @@ async def mktotp_rename_secret_impl(
 
     if old_name == new_name:
         raise ValueError("Old name and new name cannot be the same")
-    if secrets_file:
+    if secrets_file and secrets_file.strip():
         validate_file_path(secrets_file, "rename_secret", required=True)
 
     logger.info(f"Renaming secret from '{old_name}' to '{new_name}'")
