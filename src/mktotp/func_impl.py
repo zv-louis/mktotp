@@ -64,9 +64,9 @@ def register_secret_manually(new_name: str,
     with SecretMgr(secrets_file) as mgr:
         mgr.load()  # Load existing secrets
         dic = mgr.register_secret_manually(new_name,
-                                              secret,
-                                              issuer,
-                                              account)
+                                           secret,
+                                           issuer,
+                                           account)
         result.append(dic)
         mgr.save()
     return result

@@ -181,8 +181,11 @@ class TestMain:
         
         args = MagicMock()
         args.new_name = "test_secret"
-        args.file = temp_qr_image_file
+        args.qrcode_file = temp_qr_image_file
         args.secrets_file = temp_secrets_file
+        args.secret_string = None
+        args.issuer = None
+        args.account = None
         
         with patch('builtins.print') as mock_print:
             main_module.handle_add(args)
@@ -201,8 +204,11 @@ class TestMain:
         
         args = MagicMock()
         args.new_name = "test_secret"
-        args.file = temp_qr_image_file
+        args.qrcode_file = temp_qr_image_file
         args.secrets_file = temp_secrets_file
+        args.secret_string = None
+        args.issuer = None
+        args.account = None
         
         with patch('builtins.print') as mock_print:
             # The function should handle exceptions internally

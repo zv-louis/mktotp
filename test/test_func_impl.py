@@ -428,7 +428,7 @@ class TestFuncImpl:
         """Test that register_secret uses context manager properly"""
         mock_mgr = MagicMock()
         mock_secret_mgr_class.return_value.__enter__.return_value = mock_mgr
-        mock_mgr.register_secret.return_value = [{"name": "test", "account": "test@example.com", "issuer": "Test", "secret": "SECRET"}]
+        mock_mgr.register_secret.return_value = [{"name": "test", "account": "test@example.com", "issuer": "Test"}]
         
         with patch('mktotp.func_impl.decode_qrcode') as mock_decode:
             mock_decode.return_value = ["otpauth://totp/Test:test@example.com?secret=SECRET&issuer=Test"]

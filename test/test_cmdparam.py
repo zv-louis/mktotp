@@ -48,7 +48,7 @@ class TestCmdParam:
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.file == 'test_file.png'
+        assert args.qrcode_file == 'test_file.png'
         assert hasattr(args, 'handler')
         assert args.handler == mock_handler
 
@@ -73,8 +73,8 @@ class TestCmdParam:
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.secrets == 'JBSWY3DPEHPK3PXP'
-        assert args.file is None
+        assert args.secret_string == 'JBSWY3DPEHPK3PXP'
+        assert args.qrcode_file is None
         assert hasattr(args, 'handler')
         assert args.handler == mock_handler
 
@@ -94,7 +94,7 @@ class TestCmdParam:
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.secret_string == 'JBSWY3DPEHPK3PXP'
         assert args.issuer == 'TestIssuer'
         assert args.account == 'user@example.com'
         assert hasattr(args, 'handler')
@@ -117,8 +117,8 @@ class TestCmdParam:
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.file == 'qrcode.png'
-        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.qrcode_file == 'qrcode.png'
+        assert args.secret_string == 'JBSWY3DPEHPK3PXP'
         assert args.issuer == 'GitHub'
         assert args.account == 'user@example.com'
         assert hasattr(args, 'handler')
@@ -135,8 +135,8 @@ class TestCmdParam:
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.file is None
-        assert args.secrets is None
+        assert args.qrcode_file is None
+        assert args.secret_string is None
         assert args.issuer is None
         assert args.account is None
         assert hasattr(args, 'handler')
@@ -151,16 +151,16 @@ class TestCmdParam:
         # Test with long-form arguments
         args = parser.parse_args([
             'add', '--new-name', 'test_name',
-            '--file', 'qrcode.png',
-            '--secrets', 'JBSWY3DPEHPK3PXP',
+            '--qrcode-file', 'qrcode.png',
+            '--secret-string', 'JBSWY3DPEHPK3PXP',
             '--issuer', 'Google',
             '--account', 'test@gmail.com'
         ])
         
         assert args.command == 'add'
         assert args.new_name == 'test_name'
-        assert args.file == 'qrcode.png'
-        assert args.secrets == 'JBSWY3DPEHPK3PXP'
+        assert args.qrcode_file == 'qrcode.png'
+        assert args.secret_string == 'JBSWY3DPEHPK3PXP'
         assert args.issuer == 'Google'
         assert args.account == 'test@gmail.com'
 
@@ -337,7 +337,7 @@ class TestCmdParam:
         
         # Check that arguments have help text
         for action in add_parser._actions:
-            if action.dest in ['new_name', 'file']:
+            if action.dest in ['new_name', 'qrcode_file']:
                 assert action.help is not None
                 assert len(action.help) > 0
 
@@ -348,10 +348,10 @@ class TestCmdParam:
         register_sub_add(subparsers, mock_handler, parent_parser)
         
         # Test with various argument formats
-        args = parser.parse_args(['add', '--new-name', 'test_secret', '--file', 'qr_code.png'])
+        args = parser.parse_args(['add', '--new-name', 'test_secret', '--qrcode-file', 'qr_code.png'])
         
         assert args.new_name == 'test_secret'
-        assert args.file == 'qr_code.png'
+        assert args.qrcode_file == 'qr_code.png'
 
     def test_short_and_long_argument_forms(self, main_parser, mock_handler, parent_parser):
         """Test that both short and long argument forms work"""
@@ -365,12 +365,12 @@ class TestCmdParam:
         # Test short forms
         args1 = parser.parse_args(['add', '-nn', 'test', '-f', 'test.png'])
         assert args1.new_name == 'test'
-        assert args1.file == 'test.png'
+        assert args1.qrcode_file == 'test.png'
         
         # Test long forms
-        args2 = parser.parse_args(['add', '--new-name', 'test', '--file', 'test.png'])
+        args2 = parser.parse_args(['add', '--new-name', 'test', '--qrcode-file', 'test.png'])
         assert args2.new_name == 'test'
-        assert args2.file == 'test.png'
+        assert args2.qrcode_file == 'test.png'
         
         # Test mixed forms
         args3 = parser.parse_args(['rename', '-n', 'old', '--new-name', 'new'])

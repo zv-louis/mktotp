@@ -25,7 +25,7 @@ def register_sub_add(subparsers,
     )
     add_parser.add_argument(
         '-f',
-        '--file',
+        '--qrcode-file',
         type=str,
         required=False,
         default=None,
@@ -33,7 +33,7 @@ def register_sub_add(subparsers,
     )
     add_parser.add_argument(
         '-ss',
-        '--secrets',
+        '--secret-string',
         type=str,
         required=False,
         default=None,

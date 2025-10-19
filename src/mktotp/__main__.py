@@ -35,12 +35,12 @@ def handle_add(args):
     result = []
     secrets_file = get_strparam(args.secrets_file) if args.secrets_file else None
     if secrets_file:
-        result = register_secret(qr_code_file=args.file,
+        result = register_secret(qr_code_file=args.qrcode_file,
                                 new_name=args.new_name,
                                 secrets_file=secrets_file)
     else:
         result_dic = register_secret_manually(name=args.new_name,
-                                              secret=args.secrets,
+                                              secret=args.secret_string,
                                               issuer=args.issuer,
                                               account=args.account)
     for sec in result:
