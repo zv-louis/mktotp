@@ -1,5 +1,6 @@
 ﻿# encoding: utf-8-sig
 
+import sys
 from argparse import ArgumentParser
 
 from .logutil import get_logger
@@ -178,15 +179,15 @@ def main():
                 argp.print_help()
 
     except FileNotFoundError:
-        print("Error: Secrets file not found. Please ensure the file exists or specify a valid path.")
+        print("Error: Secrets file not found. Please ensure the file exists or specify a valid path.", file=sys.stderr)
     except PermissionError:
-        print("Error: Permission denied when accessing the secrets file. Check your permissions.")
+        print("Error: Permission denied when accessing the secrets file. Check your permissions.", file=sys.stderr)
     except KeyError as e:
-        print(f"Error: Token '{e}' not found in the secrets file. Please check the token name.")
+        print(f"Error: Token '{e}' not found in the secrets file. Please check the token name.", file=sys.stderr)
     except ValueError as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
     except Exception as e:
-        print(f"Exception: {e}")
+        print(f"Exception: {e}", file=sys.stderr)
 
 # ---------------------------------------------------------------------------------------
 if __name__ == "__main__":

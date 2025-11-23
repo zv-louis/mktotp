@@ -1,6 +1,7 @@
 # encoding : utf-8
 
 import asyncio
+import sys
 import traceback
 
 from fastmcp import Client, FastMCP
@@ -28,7 +29,14 @@ def run_as_mcp_server():
     logger = get_logger()
     try:
         logger.info("Starting MkTOTP MCP server with stdio transport")
-        mcp.run(transport="stdio")
+        
+        # Reconfigure stdout to use LF-only newlines (instead of CRLF on Windows)
+        # This is crucial for MCP protocol compatibility
+        #if hasattr(sys.stdout, 'reconfigure'):
+        #    logger.debug("Reconfiguring stdout to use LF-only newlines")
+        #    sys.stdout.reconfigure(newline='\n')
+        
+        mcp.run(transport="stdio", show_banner=False)
     except Exception as e:
         logger.error(f"Failed to start MCP server: {str(e)}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
