@@ -1,6 +1,6 @@
 [project]
 name = "mktotp"
-version = "0.9.9"
+version = "0.9.11"
 description = "A Simple TOTP Secret Manager with MCP Server Support"
 readme = "README.md"
 license-files = ["LICENSE"]
@@ -31,3 +31,5 @@ dev = [
 
 [project.scripts]
 mktotp = "mktotp.__main__:main"
+
+

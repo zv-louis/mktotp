@@ -29,7 +29,7 @@
             "request": "launch",
             "module": "mktotp",
             "args": [
-
+                "list",
             ],
             "console": "integratedTerminal",
             // "stopOnEntry": true,
