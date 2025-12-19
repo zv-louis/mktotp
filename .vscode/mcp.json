@@ -1,6 +1,6 @@
 {
     "servers": {
-        "mktotp": {
+        "mktotp-ws": {
             "type": "stdio",
             "command": "uv",
             "args": [
