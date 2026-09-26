@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "zv-mktotp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "${CLAUDE_PLUGIN_ROOT:-.}/src/mktotp_main.py",
+        "mcp",
+        "--mcp-server"
+      ]
+    }
+  }
+}

@@ -264,8 +264,9 @@ class TestLogUtil:
         assert len(console_handlers) > 0
 
     @patch('sys.stdout', new_callable=StringIO)
-    def test_console_output(self, mock_stdout, temp_log_dir):
-        """Test that console output works correctly"""
+    @patch('sys.stderr', new_callable=StringIO)
+    def test_console_output(self, mock_stderr, mock_stdout, temp_log_dir):
+        """Test that console output goes to stderr, not stdout"""
         log_file = temp_log_dir / "console_output_test.log"
         
         logger = get_with_init(
@@ -279,10 +280,12 @@ class TestLogUtil:
         logger.info("Info message")    # Should appear in console
         logger.warning("Warning message")  # Should appear in console
         
-        console_output = mock_stdout.getvalue()
+        console_output = mock_stderr.getvalue()
         assert "Debug message" not in console_output
         assert "Info message" in console_output
         assert "Warning message" in console_output
+        # stdout is reserved for MCP stdio transport
+        assert mock_stdout.getvalue() == ""
 
     def test_multiple_logger_instances(self, temp_log_dir):
         """Test behavior with multiple logger calls"""

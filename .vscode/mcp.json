@@ -5,15 +5,11 @@
             "command": "uv",
             "args": [
                 "run",
-                "--directory",
-                "${workspaceFolder}",
-                "-m",
-                "mktotp",
+                "${workspaceFolder}/src/mktotp_main.py",
                 "mcp",
                 "--mcp-server"
             ],
             "env": {},
-
         }
     },
     "inputs": []

@@ -41,11 +41,11 @@ def handle_add(args):
                                  new_name=args.new_name,
                                  secrets_file=secrets_file)
     else:
-        result_dic = register_secret_manually(name=args.new_name,
-                                              secret=args.secret_string,
-                                              issuer=args.issuer,
-                                              account=args.account,
-                                              secrets_file=secrets_file)
+        result = register_secret_manually(new_name=args.new_name,
+                                          secret=args.secret_string,
+                                          issuer=args.issuer,
+                                          account=args.account,
+                                          secrets_file=secrets_file)
     for sec in result:
         print(f"Registered secret name: '{sec['name']}' - Account: {sec['account']}, Issuer: {sec['issuer']}")
 
@@ -190,6 +190,9 @@ def main():
         print(f"Error: {e}", file=sys.stderr)
     except Exception as e:
         print(f"Exception: {e}", file=sys.stderr)
+    else:
+        return
+    sys.exit(1)
 
 # ---------------------------------------------------------------------------------------
 if __name__ == "__main__":
