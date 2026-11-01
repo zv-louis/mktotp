@@ -220,6 +220,24 @@ class TestMain:
             # Should call the register_secret function
             mock_register.assert_called_once()
 
+    @patch('mktotp.__main__.register_secret_manually')
+    @patch('mktotp.__main__.register_secret')
+    def test_handle_add_requires_file_or_secret(self, mock_register, mock_register_manually, temp_secrets_file):
+        """Test handle_add guides the user when neither -f nor -ss is given"""
+        args = MagicMock()
+        args.new_name = "test_secret"
+        args.qrcode_file = None
+        args.secrets_file = temp_secrets_file
+        args.secret_string = None
+        args.issuer = None
+        args.account = None
+
+        with pytest.raises(ValueError, match=r"-f/--qrcode-file .* -ss/--secret-string"):
+            main_module.handle_add(args)
+
+        mock_register.assert_not_called()
+        mock_register_manually.assert_not_called()
+
     @patch('mktotp.__main__.gen_token')
     def test_handle_get_success(self, mock_gen_token, temp_secrets_file):
         """Test handle_get function with successful token generation"""

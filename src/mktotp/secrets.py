@@ -12,6 +12,45 @@ from .logutil import get_logger
 from .permutil import set_secure_permissions, check_file_permissions
 
 # ----------------------------------------------------------------------------
+_BASE32_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz234567")
+_MAX_REPORT_POSITIONS = 10
+
+def normalize_base32_secret(secret: str | None) -> str:
+    """
+    Validate a base32 secret and return it in normalized form.
+
+    Whitespace (e.g. the groups of 4 characters some services display) and
+    trailing '=' padding are removed from the returned value.
+
+    The error message reports where the problem is (1-based positions in the
+    input as given, whitespace included) but never includes the secret value or
+    any of its characters, so it is safe to return to MCP clients and to write
+    to logs.
+
+    Args:
+        secret (str | None): The secret string to validate.
+    Returns:
+        str: The secret without whitespace and padding.
+    Raises:
+        ValueError: If the secret is empty, contains non-base32 characters,
+            or has a length that cannot be base32 decoded.
+    """
+    chars = [(pos, ch) for pos, ch in enumerate(secret or '', 1) if not ch.isspace()]
+    while chars and chars[-1][1] == '=':
+        chars.pop()
+    if not chars:
+        raise ValueError("secret is empty")
+    bad_positions = [pos for pos, ch in chars if ch not in _BASE32_CHARS]
+    if bad_positions:
+        shown = ', '.join(str(pos) for pos in bad_positions[:_MAX_REPORT_POSITIONS])
+        rest = len(bad_positions) - _MAX_REPORT_POSITIONS
+        more = f" and {rest} more" if rest > 0 else ""
+        raise ValueError(f"non-base32 characters at position(s) {shown}{more}")
+    if len(chars) % 8 in (1, 3, 6):
+        raise ValueError(f"invalid secret length ({len(chars)} characters)")
+    return ''.join(ch for _, ch in chars)
+
+# ----------------------------------------------------------------------------
 # Secret Information Class
 class SecretMgr:
     """
@@ -210,9 +249,10 @@ class SecretMgr:
         for qrc_data in qrc_datas:
             try:
                 # Manual parsing to handle issuer mismatch issues
+                # (Never put qrc_data into messages: it may contain the secret.)
                 if not qrc_data.startswith('otpauth://totp/'):
-                    get_logger().error(f"Invalid QR code data: {qrc_data}")
-                    raise ValueError(f"Invalid QR code data: {qrc_data}")
+                    get_logger().error("Invalid QR code data: not an otpauth://totp/ URI")
+                    raise ValueError("Invalid QR code data: not an otpauth://totp/ URI")
                 
                 parsed_url = urlparse(qrc_data)
                 query_params = parse_qs(parsed_url.query)
@@ -242,11 +282,11 @@ class SecretMgr:
                 
                 # Validate secret format (base32)
                 try:
-                    pyotp.TOTP(secret)
-                except Exception:
-                    get_logger().error(f"Invalid secret format: {secret}")
-                    raise ValueError(f"Invalid secret format: {secret}")
-                
+                    secret = normalize_base32_secret(secret)
+                except ValueError as e:
+                    get_logger().error(f"Invalid QR code data: invalid secret format ({e})")
+                    raise ValueError(f"Invalid QR code data: invalid secret format ({e})")
+
                 sec_name = name if cnt == 1 else f'{name}_{cnt}'
                 sec_data = {
                     'name': sec_name,
@@ -264,9 +304,13 @@ class SecretMgr:
                 get_logger().debug(f"Registered secret '{sec_name}' for account '{account}' with issuer '{issuer}'.")
                 # Increment the counter for the next secret
                 cnt += 1
-            except (ValueError, Exception) as e:
-                get_logger().error(f"Invalid QR code data: {qrc_data}")
-                raise ValueError(f"Invalid QR code data: {qrc_data}")
+            except ValueError:
+                # Messages raised above are already free of secret values.
+                raise
+            except Exception:
+                # Do not chain the original exception; its text may contain the URI.
+                get_logger().error("Invalid QR code data: failed to parse")
+                raise ValueError("Invalid QR code data: failed to parse") from None
         return result
 
     # ----------------------------------------------------------------------------
@@ -290,10 +334,10 @@ class SecretMgr:
         try:
             # Validate secret format (base32)
             try:
-                pyotp.TOTP(secret)
-            except Exception:
-                get_logger().error(f"Invalid secret format: {secret}")
-                raise ValueError(f"Invalid secret format: {secret}")
+                secret = normalize_base32_secret(secret)
+            except ValueError as e:
+                get_logger().error(f"Invalid secret format ({e})")
+                raise ValueError(f"Invalid secret format ({e})")
             sec_data = {
                 'name': name,
                 'account': account if account else name,

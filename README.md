@@ -1,124 +1,168 @@
 # mktotp
 
-A simple CUI-based TOTP secret management tool and local MCP server for multi-factor authentication (2FA)
+A simple CUI-based TOTP secret management tool and local MCP server for multi-factor authentication (MFA)
 
 English | [日本語](README_ja.md)
 
 <!-- TOC tocDepth:2..3 chapterDepth:2..6 -->
 
-- [1. Overview](#1-overview)
-- [2. Features](#2-features)
-- [3. Runtime Environment](#3-runtime-environment)
-- [4. Installation/Usage](#4-installationusage)
-- [5. Registering as MCP Server](#5-registering-as-mcp-server)
-- [6. CUI Tool Command Options](#6-cui-tool-command-options)
-  - [6-1. Common Options](#6-1-common-options)
-  - [6-2. `add` Command](#6-2-add-command)
-  - [6-3. `get` Command](#6-3-get-command)
-  - [6-4. `list` Command](#6-4-list-command)
-  - [6-5. `remove` Command](#6-5-remove-command)
-  - [6-6. `rename` Command](#6-6-rename-command)
-  - [6-7. `mcp` Command](#6-7-mcp-command)
-- [7. File Storage Location](#7-file-storage-location)
-- [8. Security Notes](#8-security-notes)
-- [9. License](#9-license)
+- [mktotp](#mktotp)
+  - [1. Overview](#1-overview)
+  - [2. Features](#2-features)
+  - [3. Runtime Environment](#3-runtime-environment)
+  - [4. Installation/Usage](#4-installationusage)
+    - [4-1. Install as a uv tool](#4-1-install-as-a-uv-tool)
+      - [4-1-1. Installation](#4-1-1-installation)
+      - [4-1-2. Registering as an MCP server](#4-1-2-registering-as-an-mcp-server)
+    - [4-2. Registering as an MCP server via the Claude plugin](#4-2-registering-as-an-mcp-server-via-the-claude-plugin)
+  - [5. CUI Tool Command Options](#5-cui-tool-command-options)
+    - [5-1. Common Options](#5-1-common-options)
+    - [5-2. `add` Command](#5-2-add-command)
+      - [5-2-1. Adding from a QR code image file](#5-2-1-adding-from-a-qr-code-image-file)
+      - [5-2-2. Registering a TOTP secret directly (CUI tool only)](#5-2-2-registering-a-totp-secret-directly-cui-tool-only)
+    - [5-3. `get` Command](#5-3-get-command)
+    - [5-4. `list` Command](#5-4-list-command)
+    - [5-5. `remove` Command](#5-5-remove-command)
+    - [5-6. `rename` Command](#5-6-rename-command)
+    - [5-7. `mcp` Command](#5-7-mcp-command)
+  - [6. File Storage Location](#6-file-storage-location)
+  - [7. Security Notes](#7-security-notes)
+  - [8. License](#8-license)
 
 <!-- /TOC -->
 
 ## 1. Overview
 
-mktotp is a command-line tool for managing TOTP (Time-based One-Time Password) secrets and generating authentication tokens for two-factor authentication services.  
-It also functions as a local MCP server, allowing operation through common Agent tools.
+mktotp is a command-line tool for managing TOTP (Time-based One-Time Password) secrets and generating authentication tokens for multi-factor authentication services.  
+It also works as a local MCP server, so you can operate it from MCP-compatible Agent tools.
 
 ## 2. Features
 
-- Register TOTP secrets from QR code image files  
-  (QR code images support PNG, JPEG, BMP, TIFF, and SVG formats)
+- Register TOTP secrets from QR code image files in PNG, JPEG, BMP, TIFF, or SVG format
 - Generate TOTP tokens for registered secrets
 - List all registered secrets
 - Remove and rename secrets
-- Can be operated from general Agent tools when running as a local MCP server.  
-  (Of course, mktotp is taking care that secret strings are not sent to the LLM)
+- Can be operated from MCP-compatible Agent tools when running as a local MCP server  
+  While running as an MCP server, mktotp is designed so that secret strings are not sent to the LLM.
 
 ## 3. Runtime Environment
 
 This project uses uv as the package manager.  
 
-For uv installation, see here:
+For how to install uv, see the following page.
 
 - [Installing uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ## 4. Installation/Usage
 
-Install and use in a uv environment.
+### 4-1. Install as a uv tool
+
+Install mktotp into a uv environment and use it.  
+Use this method when you use mktotp as a CLI tool.  
+
+#### 4-1-1. Installation
 
 ```bash
 # Install directly from git repository
 uv tool install git+{mktotp_repository_URL}
 ```
 
-After installation, you can use the `mktotp` command directly as a tool.
+After installation, you can run the `mktotp` command directly.  
 
 ```bash
 mktotp --help
 ```
 
-## 5. Registering as MCP Server
+#### 4-1-2. Registering as an MCP server
 
-By registering as an MCP server, you can operate mktotp from common Agent tools.  
-Please refer to the manual of the Agent tool you are using for the procedure to register an MCP server.
+By registering mktotp as an MCP server, you can also operate `mktotp` from Agent tools.  
+For how to register an MCP server, refer to the manual of the Agent tool you use.  
 
-```json
+```jsonc
 {
-  // Example configuration for registering as MCP server
+  // Example configuration for registering as an MCP server
   //
-  // (Note) 
-  // Registration keys may differ depending on the Agent tool.
-  // Please refer to the manual of the Agent tool you are using for detailed procedures.
-  "mcpServers" {
-    // Configuration for starting mktotp as MCP server using uv
+  // (Note)
+  // Registration keys differ depending on the Agent tool.
+  // Refer to the manual of the Agent tool you use for detailed procedures.
+  "mcpServers": {
+    // Configuration for starting mktotp as an MCP server using uv
     "mktotp-uv": {
       "type": "stdio",
       "command": "mktotp",
       "args": [
-          "mcp",
-          "--mcp-server"
+        "mcp",
+        "--mcp-server"
       ],
-      "env": {},
+      "env": {}
     }
   }
 }
 ```
 
-## 6. CUI Tool Command Options
+### 4-2. Registering as an MCP server via the Claude plugin
 
-### 6-1. Common Options
+mktotp can be installed as a Claude plugin.  
 
-- `-v, --verbose LEVEL`: Set output information detail level (0: normal, 1: verbose, 2: debug)
+```bash
+# Add the marketplace
+/plugin marketplace add zv-louis/zv-plugin-marketplace
+# Install from the marketplace
+/plugin install mktotp-mcp@zv-plugins
+```
+
+## 5. CUI Tool Command Options
+
+### 5-1. Common Options
+
+- `-v, --verbose LEVEL`: Set the output verbosity (0: normal, 1: verbose, 2: debug)
 - `-s, --secrets-file FILE`: Path to the JSON file where secrets are stored
 
-### 6-2. `add` Command
+### 5-2. `add` Command
 
-#### 6-2-1. Adding from QR code image file
+Add a new secret.  
+Specify either `-f` (QR code image) or `-ss` (secret string).  
+If neither is given, the command fails with an error.  
+If both are given, `-f` takes precedence and `-ss` is ignored.  
 
-Add a new secret from QR code image.
+- `-nn, --new-name`: Name for the secret (required)
+
+If a secret with the same name is already registered, it is overwritten.  
+
+#### 5-2-1. Adding from a QR code image file
+
+Add a new secret from a QR code image.  
 
 ```bash
 mktotp add -nn <new_name> -f <QR_code_image_file>
 ```
 
-- `-nn, --new-name`: New name for the secret (required)
-- `-f, --file`: Path to the file containing QR code data (required)
+- `-f, --qrcode-file`: Path to the image file containing the QR code  
+  PNG, JPEG, BMP, TIFF, and SVG are supported (for TIFF, only the `.tiff` extension is accepted)
 
-#### 6-2-2. Registering TOTP secret directly (CUI tool only)
+The account and issuer are taken from the QR code.  
+If the image contains multiple QR codes, all of them are registered.  
+The second and later secrets get a `_2`, `_3` ... suffix (e.g. `<new_name>_2`).  
 
-Add a new secret by directly specifying the secret string.
+#### 5-2-2. Registering a TOTP secret directly (CUI tool only)
+
+Add a new secret by specifying the secret string directly.  
 
 ```bash
-mktotp add -nn <new_name> -ss <secret_string>
+mktotp add -nn <new_name> -ss <secret_string> [-i <issuer>] [-a <account>]
 ```
 
-### 6-3. `get` Command
+- `-ss, --secret-string`: Secret string in Base32 format
+- `-i, --issuer`: Issuer. Defaults to the secret name
+- `-a, --account`: Account. Defaults to the secret name
+
+Whitespace in the secret string (such as groups of 4 characters) and trailing `=` padding are removed before saving.  
+An invalid Base32 string results in an error.  
+The error message shows only the positions of the invalid characters, counted from the start of the input (whitespace included). It never shows the secret itself.  
+
+> The string given with `-ss` may remain in your shell history and the process list.
+
+### 5-3. `get` Command
 
 Generate a TOTP token for the specified secret name.
 
@@ -128,7 +172,7 @@ mktotp get -n <secret_name>
 
 - `-n, --name`: Name of the secret to operate on (required)
 
-### 6-4. `list` Command
+### 5-4. `list` Command
 
 Display all registered secrets.
 
@@ -136,7 +180,7 @@ Display all registered secrets.
 mktotp list
 ```
 
-### 6-5. `remove` Command
+### 5-5. `remove` Command
 
 Remove the specified secret.
 
@@ -146,9 +190,9 @@ mktotp remove -n <secret_name>
 
 - `-n, --name`: Name of the secret to remove (required)
 
-### 6-6. `rename` Command
+### 5-6. `rename` Command
 
-Rename a registerd secret.
+Rename a registered secret.
 
 ```bash
 mktotp rename -n <current_name> -nn <new_name>
@@ -157,24 +201,24 @@ mktotp rename -n <current_name> -nn <new_name>
 - `-n, --name`: Current secret name (required)
 - `-nn, --new-name`: New secret name (required)
 
-### 6-7. `mcp` Command
+### 5-7. `mcp` Command
 
-Start the module as a local MCP server.  
-You can operate mktotp using Agent tools.
+Start mktotp as a local MCP server.  
+You can operate mktotp from Agent tools.
 
 ```bash
 mktotp mcp --mcp-server
 ```
 
-If the `--mcp-server` option is not specified, it will output the MCP tool list.
+If the `--mcp-server` option is not specified, it outputs the MCP tool list.
 
 ```bash
 mktotp mcp
 ```
 
-## 7. File Storage Location
+## 6. File Storage Location
 
-By default, secrets are stored in the following location:
+By default, secrets are stored in the following location.
 
 ```text
 ~/.mktotp/data/secrets.json
@@ -182,13 +226,13 @@ By default, secrets are stored in the following location:
 
 You can specify a different location with the `-s` option.
 
-## 8. Security Notes
+## 7. Security Notes
 
-- Secret files contain sensitive information, so protect them with appropriate permission settings.  
+- Secret files contain sensitive information, so protect them with permissions that prevent anyone but the owner from reading or writing them. When saving, mktotp automatically sets permissions that allow only the owner to read and write (600 on Unix-like systems).  
 - When creating backups, we recommend using encrypted storage.  
 - Remove unnecessary secrets with the `remove` command.
 
-## 9. License
+## 8. License
 
 This project is licensed under the MIT License.  
 See the [LICENSE](LICENSE) file for details.

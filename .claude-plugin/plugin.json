@@ -1,7 +1,7 @@
 {
   "name": "mktotp-mcp",
   "description": "Interactive TOTP (Time-based One-Time Password) manager. Helps create, list, and manage TOTP secrets and generate one-time passwords.",
-  "version": "0.9.12",
+  "version": "0.9.13",
   "author": {
     "name": "kanok-one",
     "email": "zervoid77@gmail.com"

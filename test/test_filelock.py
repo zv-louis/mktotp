@@ -89,7 +89,7 @@ class TestFileLock:
                     time.sleep(0.1)
                     
                     # Add a unique secret for this worker
-                    qr_data = f"otpauth://totp/Worker{worker_id}:worker{worker_id}@example.com?secret=JBSWY3DPEHPK3PX{worker_id}&issuer=Worker{worker_id}"
+                    qr_data = f"otpauth://totp/Worker{worker_id}:worker{worker_id}@example.com?secret=JBSWY3DPEHPK3PX{'ABCDEFGH'[worker_id]}&issuer=Worker{worker_id}"
                     result = mgr.register_secret(f"worker_{worker_id}", [qr_data])
                     mgr.save()
                     

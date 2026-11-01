@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from mktotp.secrets import SecretMgr
+from mktotp.secrets import SecretMgr, normalize_base32_secret
 
 
 # ----------------------------------------------------------------------------
@@ -218,6 +218,93 @@ class TestSecretMgr:
         
         with pytest.raises(ValueError, match="Invalid QR code data"):
             mgr.register_secret("invalid_secret", [invalid_qr_data])
+
+    # ----------------------------------------------------------------------------
+    def test_register_secret_error_does_not_leak_secret(self, temp_secrets_file, caplog):
+        """Error messages and logs must not contain the secret from the QR data"""
+        mgr = SecretMgr(temp_secrets_file)
+        mgr.load()
+
+        secret = "JBSWY3DPEHPK3PXP"
+        bad_secret = "JBSWY3DPE!PK3PX1"
+        hotp_uri = f"otpauth://hotp/Issuer:acc?secret={secret}&counter=1"
+        bad_uri = f"otpauth://totp/Issuer:acc?issuer=Issuer&secret={bad_secret}"
+        ok_uri = f"otpauth://totp/Issuer:acc?issuer=Issuer&secret={secret}"
+
+        with caplog.at_level("DEBUG", logger="mktotp"):
+            # not a totp URI
+            with pytest.raises(ValueError, match="Invalid QR code data") as exc_info:
+                mgr.register_secret("leak_check", [hotp_uri])
+            assert secret not in str(exc_info.value)
+
+            # invalid secret characters: position is reported, characters are not
+            with pytest.raises(ValueError, match="Invalid QR code data") as exc_info:
+                mgr.register_secret("leak_check", [bad_uri])
+            assert "position(s) 10, 16" in str(exc_info.value)
+            assert bad_secret not in str(exc_info.value)
+
+            # unexpected exception: original text must not be chained or shown
+            with patch("mktotp.secrets.normalize_base32_secret", side_effect=Exception(secret)):
+                with pytest.raises(ValueError, match="Invalid QR code data") as exc_info:
+                    mgr.register_secret("leak_check", [ok_uri])
+                assert secret not in str(exc_info.value)
+                assert exc_info.value.__cause__ is None
+
+        assert secret not in caplog.text
+        assert bad_secret not in caplog.text
+
+    # ----------------------------------------------------------------------------
+    @pytest.mark.parametrize("secret, expected", [
+        ("JBSWY3DPEHPK3PXP", None),
+        ("jbswy3dpehpk3pxp", None),
+        ("JBSWY3DPEHPK3PXP====", None),
+        ("", "secret is empty"),
+        (None, "secret is empty"),
+        ("JBSWY3DPE!PK3PX1", "position(s) 10, 16"),
+        ("   ", "secret is empty"),
+        ("JBSW Y3DP!PK3PXP", "position(s) 10"),  # positions count whitespace
+        ("JBSWY3D", None),
+        ("JBSWY3DPE", "invalid secret length (9 characters)"),
+        ("JBSW Y3DP E", "invalid secret length (9 characters)"),
+        ("JBSWY3=DPEHPK3PX", "position(s) 7"),  # '=' only allowed as trailing padding
+        ("0189" * 5, "position(s) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 and 10 more"),
+    ])
+    def test_normalize_base32_secret(self, secret, expected):
+        """normalize_base32_secret reports positions only, never characters"""
+        if expected is None:
+            normalize_base32_secret(secret)
+        else:
+            with pytest.raises(ValueError) as exc_info:
+                normalize_base32_secret(secret)
+            assert expected in str(exc_info.value)
+            if secret:
+                assert secret not in str(exc_info.value)
+
+    # ----------------------------------------------------------------------------
+    @pytest.mark.parametrize("secret", [
+        "JBSW Y3DP EHPK 3PXP",
+        " JBSWY3DPEHPK3PXP\n",
+        "JBSW\tY3DP　EHPK3PXP",
+        "JBSWY3DPEHPK3PXP====",
+    ])
+    def test_normalize_base32_secret_removes_whitespace_and_padding(self, secret):
+        assert normalize_base32_secret(secret) == "JBSWY3DPEHPK3PXP"
+
+    # ----------------------------------------------------------------------------
+    def test_register_secret_manually_stores_normalized_secret(self, temp_secrets_file):
+        """A secret with whitespace is stored without it and still generates a token"""
+        mgr = SecretMgr(temp_secrets_file)
+        mgr.load()
+        mgr.register_secret_manually("spaced", "JBSW Y3DP EHPK 3PXP")
+        assert mgr.get_secret("spaced") == "JBSWY3DPEHPK3PXP"
+        assert len(mgr.gen_totp_token("spaced")) == 6
+
+    # ----------------------------------------------------------------------------
+    def test_register_secret_from_qr_stores_normalized_secret(self, temp_secrets_file):
+        mgr = SecretMgr(temp_secrets_file)
+        mgr.load()
+        mgr.register_secret("spaced_qr", ["otpauth://totp/Issuer:acc?secret=JBSW%20Y3DP%20EHPK%203PXP"])
+        assert mgr.get_secret("spaced_qr") == "JBSWY3DPEHPK3PXP"
 
     # ----------------------------------------------------------------------------
     def test_save_secrets(self, temp_secrets_file):

@@ -41,6 +41,9 @@ def handle_add(args):
                                  new_name=args.new_name,
                                  secrets_file=secrets_file)
     else:
+        if not args.secret_string:
+            raise ValueError("Either -f/--qrcode-file (QR code image) or "
+                             "-ss/--secret-string (base32 secret) is required.")
         result = register_secret_manually(new_name=args.new_name,
                                           secret=args.secret_string,
                                           issuer=args.issuer,
