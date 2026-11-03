@@ -18,7 +18,8 @@ class TestFuncImpl:
     """Test class for function implementations"""
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup_tmp_directory(self):
+    @classmethod
+    def setup_tmp_directory(cls):
         """Set up temporary directory for test files"""
         # Create temporary directory in user's temp directory
         tmp_dir = Path(tempfile.mkdtemp(prefix="mktotp_test_"))

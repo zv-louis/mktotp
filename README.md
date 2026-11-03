@@ -13,8 +13,10 @@ English | [日本語](README_ja.md)
   - [4. Installation/Usage](#4-installationusage)
     - [4-1. Install as a uv tool](#4-1-install-as-a-uv-tool)
       - [4-1-1. Installation](#4-1-1-installation)
-      - [4-1-2. Registering as an MCP server](#4-1-2-registering-as-an-mcp-server)
-    - [4-2. Registering as an MCP server via the Claude plugin](#4-2-registering-as-an-mcp-server-via-the-claude-plugin)
+    - [4-2. Using uvx](#4-2-using-uvx)
+      - [4-2-1. Running with the uvx command](#4-2-1-running-with-the-uvx-command)
+      - [4-2-2. Registering as an MCP server](#4-2-2-registering-as-an-mcp-server)
+    - [4-3. Registering as an MCP server via the Claude plugin](#4-3-registering-as-an-mcp-server-via-the-claude-plugin)
   - [5. CUI Tool Command Options](#5-cui-tool-command-options)
     - [5-1. Common Options](#5-1-common-options)
     - [5-2. `add` Command](#5-2-add-command)
@@ -63,8 +65,8 @@ Use this method when you use mktotp as a CLI tool.
 #### 4-1-1. Installation
 
 ```bash
-# Install directly from git repository
-uv tool install git+{mktotp_repository_URL}
+# Install from PyPI
+uv tool install mktotp
 ```
 
 After installation, you can run the `mktotp` command directly.  
@@ -73,7 +75,21 @@ After installation, you can run the `mktotp` command directly.
 mktotp --help
 ```
 
-#### 4-1-2. Registering as an MCP server
+### 4-2. Using uvx
+
+Run mktotp directly from PyPI with uvx, without installing it.
+
+#### 4-2-1. Running with the uvx command
+
+Start mktotp with the uvx command.
+
+```bash
+uvx mktotp --help
+# Add @latest to always use the latest version
+uvx mktotp@latest --help
+```
+
+#### 4-2-2. Registering as an MCP server
 
 By registering mktotp as an MCP server, you can also operate `mktotp` from Agent tools.  
 For how to register an MCP server, refer to the manual of the Agent tool you use.  
@@ -84,13 +100,13 @@ For how to register an MCP server, refer to the manual of the Agent tool you use
   //
   // (Note)
   // Registration keys differ depending on the Agent tool.
-  // Refer to the manual of the Agent tool you use for detailed procedures.
   "mcpServers": {
-    // Configuration for starting mktotp as an MCP server using uv
+    // Configuration for starting mktotp as an MCP server using uvx
     "mktotp-uv": {
       "type": "stdio",
-      "command": "mktotp",
+      "command": "uvx",
       "args": [
+        "mktotp@latest",
         "mcp",
         "--mcp-server"
       ],
@@ -100,7 +116,7 @@ For how to register an MCP server, refer to the manual of the Agent tool you use
 }
 ```
 
-### 4-2. Registering as an MCP server via the Claude plugin
+### 4-3. Registering as an MCP server via the Claude plugin
 
 mktotp can be installed as a Claude plugin.  
 
