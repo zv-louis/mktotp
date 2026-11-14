@@ -13,7 +13,7 @@ def decode_qrcode_impl(file_path: str | os.PathLike) -> list[str]:
 
     This function reads an image file, detects QR codes within it, and returns
     the decoded strings. It supports various image formats including PNG, JPG,
-    JPEG, BMP, TIFF, and SVG (which is converted to PNG before decoding).
+    JPEG, BMP, TIFF, WebP, GIF, and SVG (which is converted to PNG before decoding).
 
     Args:
         file_path (str): Path to the image file containing QR codes.
@@ -100,7 +100,7 @@ def decode_qrcode(file_path: str | os.PathLike) -> list[str]:
         except Exception as e:
             log_obj.error(f"Error processing SVG file: {e}")
             raise ValueError(f"Failed to process SVG file: {e}")
-    elif lowwer_path.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+    elif lowwer_path.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.webp', '.gif')):
         decoded_info = decode_qrcode_impl(image_path)
     else:
         log_obj.error(f"Unsupported file format: {file_path}")

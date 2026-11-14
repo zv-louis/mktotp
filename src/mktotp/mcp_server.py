@@ -82,7 +82,7 @@ async def mktotp_register_secret(
     Args:
         qr_code_image_file_path (str):
             Path to the QR code image file.
-            Supported formats are PNG, JPEG, TIFF, BMP, and SVG.
+            Supported formats are PNG, JPEG, TIFF, BMP, WebP, GIF, and SVG.
         new_name (str):
             Name to assign to the new secret.
         secrets_file (str):

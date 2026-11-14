@@ -56,7 +56,7 @@ class TestQRCodeUtil:
 
     def test_decode_qrcode_supported_formats(self, temp_image_file):
         """Test decode_qrcode with all supported formats"""
-        supported_formats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff']
+        supported_formats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif', '.webp', '.gif']
         
         for ext in supported_formats:
             test_file = temp_image_file.replace('.png', ext)

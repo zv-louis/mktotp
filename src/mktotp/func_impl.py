@@ -14,7 +14,7 @@ def register_secret(qr_code_file: str | os.PathLike,
     Args:
         qr_code_file (str | os.PathLike):
             Path to the QR code file.
-            Supported formats are PNG, JPEG, TIFF, BMP, and SVG.
+            Supported formats are PNG, JPEG, TIFF, BMP, WebP, GIF, and SVG.
         new_name (str):
             The name to assign to the new secret.
         secrets_file (str | os.PathLike):

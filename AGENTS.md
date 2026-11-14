@@ -18,7 +18,7 @@ src/mktotp/
   cmdparam.py     argparse のサブコマンド定義（add / get / list / remove / rename / mcp）
   func_impl.py    CLI と MCP で共有する業務ロジック（SecretMgr を with で開いて操作）
   secrets.py      SecretMgr: シークレット JSON の読み書き、ロック、TOTP 生成
-  qrcode_util.py  QR コード画像のデコード（otpauth:// URI を取り出す）
+  qrcode_util.py  QR コード画像のデコード（otpauth:// URI を取り出す）。対応形式は PNG / JPEG / BMP / TIFF（.tiff, .tif）/ WebP / GIF / SVG。読み込みは OpenCV、SVG は cairosvg で PNG に変換してから行う
   permutil.py     シークレットファイルの権限設定（Unix は 600、Windows は icacls）
   logutil.py      ロガー（出力は stderr。MCP の stdio を汚さないため）
   mcp_server.py   FastMCP のツール定義（薄いラッパー）
@@ -79,8 +79,9 @@ uv run mktotp --help    # ローカル実行
 
 - MCP ツールの戻り値やログにシークレット値を含めない。`list_secrets(include_secret=False)` の挙動を崩さない
 - ログや print は stderr に出す。stdout は MCP の stdio 通信に使われる
-- 依存を変えるときは `pyproject.toml` と `src/mktotp_main.py` のインライン依存の両方を更新する
-- バージョンは `pyproject.toml` と `.claude-plugin/plugin.json` の両方にある
+- 依存を変えるときは `pyproject.toml` と `src/mktotp_main.py` のインライン依存の両方を更新し、`uv lock` で `uv.lock` も更新する
+- バージョンは `pyproject.toml` と `.claude-plugin/plugin.json` の両方にある。変えたら `uv lock` で `uv.lock` の mktotp のバージョンも更新する
+- 対応する画像形式を増減するときは `qrcode_util.py` の許可リストのほか、`func_impl.py` と `mcp_server.py` の docstring、`README.md` / `README_ja.md` の対応形式、テストも更新する
 - `.mcp.json` は PyPI の公開版を起動する。ソースの変更を MCP 経由で試すときは `.vscode/mcp.json`（手元のソースを起動）を使う
 
 ## 公開
@@ -88,4 +89,5 @@ uv run mktotp --help    # ローカル実行
 - `v*` のタグを push すると `.github/workflows/publish.yml` が動き、テスト → ビルド → TestPyPI → PyPI の順に公開する
 - 公開は Trusted Publishing（OIDC）で行い、attestation（provenance）が付く。PyPI と TestPyPI の両方に Trusted Publisher の登録が必要で、Workflow name は `publish.yml`、Environment は `pypi` / `testpypi`
 - 同じバージョンは再アップロードできない。公開前に `pyproject.toml` と `.claude-plugin/plugin.json` のバージョンを上げる
+- ワークフローは、タグ（`v` を除く）・`pyproject.toml`・`.claude-plugin/plugin.json` のバージョンが一致しないと失敗し、公開されない
 - 0.9.13 は手元から公開済み（provenance なし）。provenance 付きの公開は 0.9.14 以降になる

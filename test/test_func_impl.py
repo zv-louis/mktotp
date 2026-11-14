@@ -88,7 +88,7 @@ class TestFuncImpl:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
-    @pytest.fixture(params=['png', 'bmp', 'tiff', 'jpg', 'svg'])
+    @pytest.fixture(params=['png', 'bmp', 'tiff', 'tif', 'jpg', 'webp', 'gif', 'svg'])
     def temp_qr_image_file_multi_format(self, request):
         """Create temporary QR code image files for multiple formats"""
         format_ext = request.param
@@ -160,7 +160,7 @@ class TestFuncImpl:
             assert result[1]["name"] == "multi_secret_2"
 
     def test_register_secret_multiple_image_formats(self, tmp_secrets_file, temp_qr_image_file_multi_format):
-        """Test QR code reading with multiple image formats (PNG, BMP, TIFF, JPG, SVG)"""
+        """Test QR code reading with multiple image formats (PNG, BMP, TIFF, JPG, WebP, GIF, SVG)"""
         with patch('mktotp.func_impl.decode_qrcode') as mock_decode:
             mock_qr_data = ["otpauth://totp/Test:test@example.com?secret=JBSWY3DPEHPK3PXT&issuer=Test"]
             mock_decode.return_value = mock_qr_data

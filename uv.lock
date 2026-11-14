@@ -704,7 +704,7 @@ wheels = [
 
 [[package]]
 name = "mktotp"
-version = "0.9.14"
+version = "0.9.15"
 source = { editable = "." }
 dependencies = [
     { name = "cairosvg" },
@@ -725,11 +725,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cairosvg", specifier = ">=2.8.2" },
-    { name = "fastmcp", specifier = ">=2.11.3" },
-    { name = "filelock", specifier = ">=3.18.0" },
+    { name = "cairosvg", specifier = ">=2.9.1" },
+    { name = "fastmcp", specifier = ">=3.4.10" },
+    { name = "filelock", specifier = ">=3.20.3" },
     { name = "opencv-python", specifier = ">=4.12.0.88" },
-    { name = "pillow", specifier = ">=10.0.0" },
+    { name = "pillow", specifier = ">=13.0.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pyotp", specifier = ">=2.9.0" },
 ]

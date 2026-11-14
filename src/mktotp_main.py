@@ -3,11 +3,11 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "cairosvg>=2.8.2",
-#     "fastmcp>=2.11.3",
-#     "filelock>=3.18.0",
+#     "cairosvg>=2.9.1",
+#     "fastmcp>=3.4.10",
+#     "filelock>=3.20.3",
 #     "opencv-python>=4.12.0.88",
-#     "pillow>=10.0.0",
+#     "pillow>=13.0.0",
 #     "pydantic>=2.11.7",
 #     "pyotp>=2.9.0",
 # ]
